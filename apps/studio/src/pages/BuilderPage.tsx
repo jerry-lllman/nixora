@@ -146,8 +146,8 @@ export function BuilderPage() {
   };
 
   return (
-    <main className="flex min-h-screen bg-slate-50 text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),transparent_55%)] dark:bg-slate-950 dark:text-slate-100">
-      <aside className="hidden w-80 flex-none border-r border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur lg:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
+    <main className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),transparent_55%)] dark:bg-slate-950 dark:text-slate-100">
+      <aside className="hidden min-h-0 w-80 flex-none overflow-y-auto border-r border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur lg:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
         <div className="space-y-6">
           <header className="space-y-3">
             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
@@ -225,7 +225,7 @@ export function BuilderPage() {
           </div>
         </div>
       </aside>
-      <section className="relative flex flex-1 flex-col">
+      <section className="relative flex flex-1 min-h-0 flex-col">
         <header className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-5 text-sm text-slate-600 backdrop-blur dark:border-white/5 dark:bg-slate-950/60 dark:text-slate-400">
           <div className="flex items-center gap-3">
             <ThemeToggle />
@@ -257,7 +257,7 @@ export function BuilderPage() {
             </nav>
           </div>
         </header>
-        <div className="relative flex flex-1 flex-col overflow-hidden">
+        <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),transparent_55%)]"></div>
           <div className="relative flex flex-1 justify-center overflow-y-auto px-8 py-12">
             <div
@@ -292,7 +292,7 @@ export function BuilderPage() {
           </footer>
         </div>
       </section>
-      <aside className="hidden w-[22rem] flex-none border-l border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur xl:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
+      <aside className="hidden min-h-0 w-[22rem] flex-none overflow-y-auto border-l border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur xl:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
         <div className="space-y-6">
           <header className="space-y-2">
             <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-700 dark:border-emerald-500/30 dark:bg-transparent dark:text-emerald-300">
