@@ -2,11 +2,11 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 type Theme = "light" | "dark";
 
-type ThemeContextValue = {
+interface ThemeContextValue {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
-};
+}
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -47,7 +47,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     () => ({
       theme,
       setTheme,
-      toggleTheme: () => setTheme((current) => (current === "dark" ? "light" : "dark")),
+      toggleTheme: () => {
+        setTheme((current) => (current === "dark" ? "light" : "dark"));
+      }
     }),
     [theme],
   );

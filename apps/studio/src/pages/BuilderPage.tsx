@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 interface BuilderComponent {
@@ -100,13 +100,45 @@ export function BuilderPage() {
   const [selectedComponentId, setSelectedComponentId] = useState<string>(
     components[0]?.id ?? ""
   );
+  const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(
+    null
+  );
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const selectedComponent = useMemo(() => {
+  const selectedComponent = useMemo<BuilderComponent | null>(() => {
+    const fallback = components[0] ?? null;
     return (
       components.find((component) => component.id === selectedComponentId) ??
-      components[0]
+      fallback
     );
   }, [selectedComponentId]);
+
+  const selectedComponentName = selectedComponent?.name ?? "未选择";
+  const selectedComponentSettings = selectedComponent?.settings ?? [];
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleMouseEnter = (componentId: string) => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    hoverTimeoutRef.current = setTimeout(() => {
+      setHoveredComponentId(componentId);
+    }, 1000);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setHoveredComponentId(null);
+  };
 
   return (
     <main className="flex min-h-screen bg-slate-50 text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),transparent_55%)] dark:bg-slate-950 dark:text-slate-100">
@@ -140,34 +172,42 @@ export function BuilderPage() {
                 className="w-full rounded-xl border border-slate-200 bg-white/70 py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-white/5 dark:bg-slate-950/80 dark:text-slate-200 dark:placeholder:text-slate-600"
               />
             </div>
-            <div className="mt-5 space-y-2">
+            <div className="mt-5 grid grid-cols-3 gap-3">
               {components.map((component) => {
                 const isActive = component.id === selectedComponentId;
                 return (
                   <button
                     key={component.id}
-                    onClick={() => setSelectedComponentId(component.id)}
-                    className={`group relative w-full overflow-hidden rounded-xl border px-4 py-4 text-left transition ${
+                    onClick={() => {
+                      setSelectedComponentId(component.id);
+                    }}
+                    onMouseEnter={() => {
+                      handleMouseEnter(component.id);
+                    }}
+                    onMouseLeave={handleMouseLeave}
+                    className={`group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border px-4 py-5 text-center transition ${
                       isActive
-                        ? "border-emerald-400/70 bg-gradient-to-r from-emerald-100 via-emerald-50 to-transparent shadow-[0_20px_50px_-30px_rgba(16,185,129,0.45)] dark:from-emerald-500/15 dark:via-emerald-500/5 dark:shadow-[0_20px_50px_-30px_rgba(16,185,129,0.9)]"
-                        : "border-slate-200 bg-white/70 hover:border-emerald-400/50 hover:bg-emerald-50/40 dark:border-white/5 dark:bg-slate-900/50 dark:hover:border-emerald-400/50 dark:hover:bg-slate-900/70"
+                        ? "border-emerald-400/70 bg-gradient-to-b from-emerald-100 via-emerald-50 to-transparent shadow-[0_20px_50px_-30px_rgba(16,185,129,0.45)] dark:from-emerald-500/10 dark:via-emerald-500/5 dark:to-transparent dark:shadow-[0_20px_50px_-30px_rgba(16,185,129,0.9)]"
+                        : "border-slate-200 bg-white/80 hover:border-emerald-400/50 hover:bg-emerald-50/40 dark:border-white/5 dark:bg-slate-900/50 dark:hover:border-emerald-400/50 dark:hover:bg-slate-900/70"
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-lg ${isActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300" : "bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-300"}`}
-                      >
-                        {component.icon}
-                      </span>
-                      <div className="space-y-1">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {component.name}
-                        </p>
-                        <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
-                          {component.description}
-                        </p>
+                    <span
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl transition ${
+                        isActive
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                          : "bg-slate-100 text-slate-600 group-hover:bg-emerald-50 group-hover:text-emerald-600 dark:bg-slate-800/80 dark:text-slate-300 dark:group-hover:text-emerald-200"
+                      }`}
+                    >
+                      {component.icon}
+                    </span>
+                    <p className="text-xs font-semibold text-slate-700 transition-colors dark:text-slate-200">
+                      {component.name}
+                    </p>
+                    {hoveredComponentId === component.id ? (
+                      <div className="pointer-events-none absolute inset-x-2 top-full z-10 -mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] leading-relaxed text-slate-600 shadow-[0_12px_30px_-20px_rgba(16,185,129,0.3)] dark:border-emerald-400/40 dark:bg-slate-900/95 dark:text-slate-200 dark:shadow-[0_12px_30px_-20px_rgba(16,185,129,0.8)]">
+                        {component.description}
                       </div>
-                    </div>
+                    ) : null}
                   </button>
                 );
               })}
@@ -286,7 +326,7 @@ export function BuilderPage() {
           </div>
           <footer className="border-t border-slate-200 bg-white/80 px-8 py-5 dark:border-white/5 dark:bg-slate-950/70">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-500">
-              <span>已选组件：{selectedComponent?.name}</span>
+              <span>已选组件：{selectedComponentName}</span>
               <span>自动保存于 2 分钟前</span>
             </div>
           </footer>
@@ -300,7 +340,7 @@ export function BuilderPage() {
             </span>
             <div>
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                {selectedComponent?.name}
+                {selectedComponentName}
               </h2>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 微调文案、样式与交互，实时预览在画布中的效果。
@@ -308,7 +348,7 @@ export function BuilderPage() {
             </div>
           </header>
           <form className="space-y-5 text-sm text-slate-600 dark:text-slate-300">
-            {selectedComponent?.settings.map((setting) => (
+            {selectedComponentSettings.map((setting) => (
               <label
                 key={setting.label}
                 className="block space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 transition hover:border-emerald-400/50 dark:border-white/5 dark:bg-slate-900/60 dark:hover:border-emerald-400/40"

@@ -18,7 +18,7 @@ module.exports = {
     browser: true,
     es2022: true
   },
-  ignorePatterns: ["dist", "node_modules"],
+  ignorePatterns: ["dist", "node_modules", "tailwind.config.ts"],
   rules: {
     "@typescript-eslint/consistent-type-imports": ["error", { "prefer": "type-imports" }]
   }
