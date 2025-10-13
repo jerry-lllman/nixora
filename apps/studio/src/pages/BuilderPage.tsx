@@ -1,120 +1,85 @@
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { DragEvent } from "react";
 import { ThemeToggle } from "../components/ThemeToggle";
-
-interface BuilderComponent {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  settings: { label: string; placeholder: string; helper?: string }[];
-}
-
-const components: BuilderComponent[] = [
-  {
-    id: "hero",
-    name: "Hero Section",
-    description:
-      "Large headline block with supporting text and call-to-action buttons.",
-    icon: "✨",
-    settings: [
-      {
-        label: "Headline",
-        placeholder: "Craft a compelling statement...",
-        helper: "Appears above the fold across all breakpoints."
-      },
-      {
-        label: "Supporting copy",
-        placeholder: "Expand on the value proposition"
-      },
-      {
-        label: "Primary action",
-        placeholder: "Get started"
-      }
-    ]
-  },
-  {
-    id: "feature-grid",
-    name: "Feature Grid",
-    description: "Three column layout for showcasing product capabilities.",
-    icon: "🧩",
-    settings: [
-      {
-        label: "Section title",
-        placeholder: "Why teams choose us"
-      },
-      {
-        label: "Feature count",
-        placeholder: "3",
-        helper: "Controls how many cards are generated in the grid."
-      },
-      {
-        label: "Background",
-        placeholder: "Gradient, image, or solid color"
-      }
-    ]
-  },
-  {
-    id: "testimonials",
-    name: "Testimonials",
-    description: "Rotating carousel with social proof and client logos.",
-    icon: "💬",
-    settings: [
-      {
-        label: "Headline",
-        placeholder: "What customers are saying"
-      },
-      {
-        label: "Quote source",
-        placeholder: "Upload CSV or connect integration"
-      },
-      {
-        label: "Accent color",
-        placeholder: "#3b82f6"
-      }
-    ]
-  },
-  {
-    id: "cta",
-    name: "Call to action",
-    description: "Slim banner with headline, description, and form inputs.",
-    icon: "🚀",
-    settings: [
-      {
-        label: "Message",
-        placeholder: "Ready to start building?"
-      },
-      {
-        label: "Button label",
-        placeholder: "Request access"
-      },
-      {
-        label: "Target URL",
-        placeholder: "https://"
-      }
-    ]
-  }
-];
+import type { BuilderComponent } from "../shared/builderComponents";
+import { builderComponents } from "../shared/builderComponents";
+import type {
+  BuilderToPreviewMessage,
+  PreviewToBuilderMessage
+} from "../shared/messaging";
+import { BUILDER_MESSAGE_TYPE, PREVIEW_READY_TYPE } from "../shared/messaging";
 
 export function BuilderPage() {
   const [selectedComponentId, setSelectedComponentId] = useState<string>(
-    components[0]?.id ?? ""
+    builderComponents[0]?.id ?? ""
   );
   const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(
     null
   );
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [droppedComponentIds, setDroppedComponentIds] = useState<string[]>([]);
+  const [isDraggingOverPreview, setIsDraggingOverPreview] = useState(false);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+  const [previewReadySignal, setPreviewReadySignal] = useState(0);
 
   const selectedComponent = useMemo<BuilderComponent | null>(() => {
-    const fallback = components[0] ?? null;
+    const fallback = builderComponents[0] ?? null;
     return (
-      components.find((component) => component.id === selectedComponentId) ??
-      fallback
+      builderComponents.find(
+        (component) => component.id === selectedComponentId
+      ) ?? fallback
     );
   }, [selectedComponentId]);
 
   const selectedComponentName = selectedComponent?.name ?? "未选择";
   const selectedComponentSettings = selectedComponent?.settings ?? [];
+
+  const previewHeight = useMemo(() => {
+    const baseHeight = 560;
+    const additionalPerComponent = 220;
+    const maxHeight = 1600;
+    const computedHeight = baseHeight + droppedComponentIds.length * additionalPerComponent;
+    return `${Math.min(maxHeight, Math.max(baseHeight, computedHeight))}px`;
+  }, [droppedComponentIds.length]);
+
+  const handleDragStart = (
+    event: DragEvent<HTMLButtonElement>,
+    componentId: string
+  ) => {
+    event.dataTransfer.setData("application/builder-component", componentId);
+    event.dataTransfer.effectAllowed = "copy";
+    setSelectedComponentId(componentId);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingOverPreview(false);
+    const componentId = event.dataTransfer.getData("application/builder-component");
+    if (!componentId) {
+      return;
+    }
+    setDroppedComponentIds((prev) => [...prev, componentId]);
+    setSelectedComponentId(componentId);
+  };
+
+  const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDraggingOverPreview(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    const relatedTarget = event.relatedTarget as Node | null;
+    if (relatedTarget && event.currentTarget.contains(relatedTarget)) {
+      return;
+    }
+    setIsDraggingOverPreview(false);
+  };
 
   useEffect(() => {
     return () => {
@@ -123,6 +88,46 @@ export function BuilderPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const handlePreviewMessage = (
+      event: MessageEvent<PreviewToBuilderMessage>
+    ) => {
+      if (event.origin !== window.location.origin) {
+        return;
+      }
+
+      if (event.data?.type === PREVIEW_READY_TYPE) {
+        setPreviewReadySignal((signal) => signal + 1);
+      }
+    };
+
+    window.addEventListener("message", handlePreviewMessage);
+
+    return () => {
+      window.removeEventListener("message", handlePreviewMessage);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (previewReadySignal === 0) {
+      return;
+    }
+
+    const previewWindow = iframeRef.current?.contentWindow;
+    if (!previewWindow) {
+      return;
+    }
+
+    const message: BuilderToPreviewMessage = {
+      type: BUILDER_MESSAGE_TYPE,
+      payload: {
+        componentIds: droppedComponentIds
+      }
+    };
+
+    previewWindow.postMessage(message, window.location.origin);
+  }, [droppedComponentIds, previewReadySignal]);
 
   const handleMouseEnter = (componentId: string) => {
     if (hoverTimeoutRef.current) {
@@ -173,7 +178,7 @@ export function BuilderPage() {
               />
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3">
-              {components.map((component) => {
+              {builderComponents.map((component) => {
                 const isActive = component.id === selectedComponentId;
                 return (
                   <button
@@ -185,6 +190,11 @@ export function BuilderPage() {
                       handleMouseEnter(component.id);
                     }}
                     onMouseLeave={handleMouseLeave}
+                    draggable
+                    onDragStart={(event) => handleDragStart(event, component.id)}
+                    onDragEnd={() => {
+                      setIsDraggingOverPreview(false);
+                    }}
                     className={`group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border px-4 py-5 text-center transition ${
                       isActive
                         ? "border-emerald-400/70 bg-gradient-to-b from-emerald-100 via-emerald-50 to-transparent shadow-[0_20px_50px_-30px_rgba(16,185,129,0.45)] dark:from-emerald-500/10 dark:via-emerald-500/5 dark:to-transparent dark:shadow-[0_20px_50px_-30px_rgba(16,185,129,0.9)]"
@@ -250,78 +260,28 @@ export function BuilderPage() {
         <div className="relative flex flex-1 flex-col overflow-hidden">
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),transparent_55%)]"></div>
           <div className="relative flex flex-1 justify-center overflow-y-auto px-8 py-12">
-            <div className="relative w-full max-w-4xl">
+            <div
+              className="relative w-full max-w-4xl"
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
               <div className="absolute inset-x-10 top-0 -z-20 h-72 rounded-full bg-emerald-500/10 blur-3xl"></div>
-              <div className="absolute inset-0 -z-10 rounded-[32px] border border-slate-200 bg-white/90 shadow-[0_40px_120px_-40px_rgba(16,185,129,0.25)] dark:border-white/5 dark:bg-slate-950/80 dark:shadow-[0_40px_120px_-40px_rgba(15,118,110,0.6)]"></div>
-              <div className="relative space-y-8 p-12">
-                <div className="rounded-[28px] border border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 p-10 text-slate-700 dark:border-white/5 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950/80 dark:to-slate-950/80 dark:text-slate-300">
-                  <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-3">
-                      <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-700 dark:bg-transparent dark:text-emerald-300">
-                        Hero
-                      </span>
-                      <div>
-                        <h3 className="text-3xl font-semibold text-slate-900 dark:text-white">
-                          Launch campaigns faster
-                        </h3>
-                        <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                          Configure headline, copy, and CTAs to match your
-                          go-to-market motion. Preview live content connections
-                          in real time.
-                        </p>
-                      </div>
-                    </div>
-                    <button className="self-start rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-medium text-slate-600 transition hover:border-emerald-500/40 hover:text-emerald-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:text-emerald-200">
-                      Replace component
-                    </button>
-                  </div>
-                  <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-5 text-sm text-slate-600 dark:border-white/5 dark:bg-slate-950/60 dark:text-slate-300">
-                    <span className="rounded-lg bg-slate-100 px-3 py-2 dark:bg-white/5">
-                      Headline: “Launch campaigns faster”
-                    </span>
-                    <span className="rounded-lg bg-slate-100 px-3 py-2 dark:bg-white/5">
-                      Supporting copy: “Collaborate, QA, and publish from one
-                      place.”
-                    </span>
-                    <span className="rounded-lg bg-slate-100 px-3 py-2 dark:bg-white/5">
-                      Primary action: “Start building”
-                    </span>
-                  </div>
-                </div>
-                <div className="rounded-[28px] border border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 p-10 text-slate-700 dark:border-white/5 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-950/80 dark:to-slate-950/80 dark:text-slate-300">
-                  <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
-                    <div className="space-y-3">
-                      <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-700 dark:bg-transparent dark:text-emerald-300">
-                        Feature grid
-                      </span>
-                      <div>
-                        <h3 className="text-3xl font-semibold text-slate-900 dark:text-white">
-                          Showcase capabilities
-                        </h3>
-                        <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                          Toggle column layouts, add cards, and map data fields
-                          to your CMS. Set per-breakpoint spacing and color
-                          tokens.
-                        </p>
-                      </div>
-                    </div>
-                    <button className="self-start rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-medium text-slate-600 transition hover:border-emerald-500/40 hover:text-emerald-500 dark:border-white/10 dark:bg-white/5 dark:text-slate-200 dark:hover:text-emerald-200">
-                      Replace component
-                    </button>
-                  </div>
-                  <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-white/80 p-5 text-sm text-slate-600 dark:border-white/5 dark:bg-slate-950/60 dark:text-slate-300">
-                    <span className="rounded-lg bg-slate-100 px-3 py-2 dark:bg-white/5">
-                      Section title: “Why teams choose us”
-                    </span>
-                    <span className="rounded-lg bg-slate-100 px-3 py-2 dark:bg-white/5">
-                      Feature count: 3
-                    </span>
-                    <span className="rounded-lg bg-slate-100 px-3 py-2 dark:bg-white/5">
-                      Background: Gradient
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <div
+                className={`absolute inset-0 -z-10 rounded-[32px] border bg-white/90 shadow-[0_40px_120px_-40px_rgba(16,185,129,0.25)] backdrop-blur transition dark:bg-slate-950/80 dark:shadow-[0_40px_120px_-40px_rgba(15,118,110,0.6)] ${
+                  isDraggingOverPreview
+                    ? "border-emerald-400/60 ring-4 ring-emerald-500/20"
+                    : "border-slate-200 dark:border-white/5"
+                }`}
+              ></div>
+              <iframe
+                ref={iframeRef}
+                title="组件预览"
+                className="relative z-10 w-full overflow-hidden rounded-[32px] border-0 bg-transparent text-left shadow-[0_24px_80px_-50px_rgba(16,185,129,0.45)] pointer-events-none"
+                src="/preview.html"
+                style={{ height: previewHeight }}
+              />
             </div>
           </div>
           <footer className="border-t border-slate-200 bg-white/80 px-8 py-5 dark:border-white/5 dark:bg-slate-950/70">
