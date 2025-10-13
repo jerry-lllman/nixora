@@ -12,9 +12,12 @@ type BaseProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variantClassNames: Record<ButtonVariants, string> = {
-  primary: "bg-emerald-500 text-slate-950 hover:bg-emerald-400",
-  ghost: "bg-transparent text-slate-100 hover:bg-slate-800/70",
-  outline: "border border-slate-700 bg-transparent text-slate-100 hover:bg-slate-800/70"
+  primary:
+    "bg-emerald-500 text-emerald-950 hover:bg-emerald-400 dark:text-slate-950",
+  ghost:
+    "bg-transparent text-slate-600 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800/70",
+  outline:
+    "border border-slate-300 bg-transparent text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-100 dark:hover:bg-slate-800/70"
 };
 
 export const Button = forwardRef<HTMLButtonElement, BaseProps>(
