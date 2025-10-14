@@ -1,23 +1,27 @@
-import { useState, type DragEvent } from "react";
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragOverlay,
   type DragEndEvent,
-  type DragStartEvent,
+  type DragStartEvent
 } from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
-  verticalListSortingStrategy,
+  verticalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { CanvasComponentInstance, BuilderComponent } from "../../../shared/builderComponents";
+import { useState, type DragEvent } from "react";
+import { cn } from "../../../lib/utils";
+import type {
+  BuilderComponent,
+  CanvasComponentInstance
+} from "../../../shared/builderComponents";
 import { builderComponents } from "../../../shared/builderComponents";
 
 interface CanvasAreaProps {
@@ -44,7 +48,7 @@ function SortableItem({
   instance,
   isSelected,
   builderComponent,
-  onComponentClick,
+  onComponentClick
 }: SortableItemProps) {
   const {
     attributes,
@@ -52,14 +56,14 @@ function SortableItem({
     setNodeRef,
     transform,
     transition,
-    isDragging,
+    isDragging
   } = useSortable({ id: instance.instanceId });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: isDragging ? undefined : transition, // 拖拽时禁用过渡，让其立即跟随鼠标
     opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? 'grabbing' : 'grab',
+    cursor: isDragging ? "grabbing" : "grab"
   };
 
   const Component = builderComponent.component;
@@ -68,25 +72,20 @@ function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      onClick={() => onComponentClick(instance.instanceId)}
-      className={`relative rounded-xl transition-all ${
+      onClick={() => {
+        onComponentClick(instance.instanceId);
+      }}
+      className={cn(
+        "relative transition-all border",
         isSelected
-          ? "ring-2 ring-emerald-500 ring-offset-4 ring-offset-white dark:ring-offset-slate-950"
-          : "hover:ring-2 hover:ring-emerald-300 hover:ring-offset-2 hover:ring-offset-white dark:hover:ring-offset-slate-950"
-      }`}
+          ? "border-emerald-500"
+          : "border-transparent hover:border-emerald-300 hover:border-dashed"
+      )}
       {...attributes}
       {...listeners}
     >
-      {/* 组件标签 */}
-      {isSelected ? (
-        <div className="absolute -top-3 left-4 z-20 flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
-          <span>{builderComponent.icon}</span>
-          <span>{builderComponent.name}</span>
-        </div>
-      ) : null}
-
       {/* 渲染真实组件 */}
-      <div className="p-4 pointer-events-none">
+      <div className="pointer-events-none">
         <Component {...instance.config} />
       </div>
     </div>
@@ -102,18 +101,18 @@ export function CanvasArea({
   onDragOver,
   onDrop,
   onComponentClick,
-  onReorder,
+  onReorder
 }: CanvasAreaProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 移动8px后才激活拖拽，防止误触但保持灵敏
-      },
+        distance: 8 // 移动8px后才激活拖拽，防止误触但保持灵敏
+      }
     }),
     useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
+      coordinateGetter: sortableKeyboardCoordinates
     })
   );
 
@@ -188,14 +187,15 @@ export function CanvasArea({
                   items={canvasComponents.map((c) => c.instanceId)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-6">
+                  <div>
                     {canvasComponents.map((instance) => {
                       const builderComponent = builderComponents.find(
                         (c) => c.id === instance.componentId
                       );
                       if (!builderComponent) return null;
 
-                      const isSelected = instance.instanceId === selectedInstanceId;
+                      const isSelected =
+                        instance.instanceId === selectedInstanceId;
 
                       return (
                         <SortableItem
@@ -216,11 +216,7 @@ export function CanvasArea({
       </div>
       <DragOverlay>
         {activeInstance && activeBuilderComponent ? (
-          <div className="relative rounded-xl ring-2 ring-emerald-500 ring-offset-4 ring-offset-white dark:ring-offset-slate-950 shadow-2xl opacity-90 bg-white dark:bg-slate-950">
-            <div className="absolute -top-3 left-4 z-20 flex items-center gap-2 rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white shadow-lg">
-              <span>{activeBuilderComponent.icon}</span>
-              <span>{activeBuilderComponent.name}</span>
-            </div>
+          <div className="relative rounded-xl  border border-emerald-500 opacity-90 bg-white dark:bg-slate-950">
             <div className="p-4 pointer-events-none">
               {(() => {
                 const Component = activeBuilderComponent.component;
