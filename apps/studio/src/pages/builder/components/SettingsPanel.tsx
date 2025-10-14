@@ -1,65 +1,78 @@
-import type { BuilderComponent } from "../../../shared/builderComponents";
+import type { CanvasComponentInstance, BuilderComponent } from "../../../shared/builderComponents";
+import { ConfigField } from "./ConfigField";
 
 interface SettingsPanelProps {
-  selectedComponent: BuilderComponent | null;
+  selectedInstance: CanvasComponentInstance | null;
+  builderComponent: BuilderComponent | null;
+  onConfigChange: (key: string, value: any) => void;
+  onDelete: () => void;
 }
 
-export function SettingsPanel({ selectedComponent }: SettingsPanelProps) {
-  const selectedComponentName = selectedComponent?.name ?? "未选择";
-  const selectedComponentSettings = selectedComponent?.settings ?? [];
+export function SettingsPanel({
+  selectedInstance,
+  builderComponent,
+  onConfigChange,
+  onDelete
+}: SettingsPanelProps) {
+  if (!selectedInstance || !builderComponent) {
+    return (
+      <aside className="hidden min-h-0 w-[22rem] flex-none overflow-y-auto border-l border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur xl:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
+        <div className="flex h-full items-center justify-center">
+          <div className="text-center space-y-3">
+            <div className="text-4xl">👈</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              从左侧拖拽组件到画布
+              <br />
+              或点击画布中的组件进行配置
+            </p>
+          </div>
+        </div>
+      </aside>
+    );
+  }
 
   return (
     <aside className="hidden min-h-0 w-[22rem] flex-none overflow-y-auto border-l border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur xl:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
       <div className="space-y-6">
         <header className="space-y-2">
-          <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-700 dark:border-emerald-500/30 dark:bg-transparent dark:text-emerald-300">
-            设置
+          <span className="inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
+            {builderComponent.icon} 配置
           </span>
           <div>
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-              {selectedComponentName}
+              {builderComponent.name}
             </h2>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              微调文案、样式与交互，实时预览在画布中的效果。
+              {builderComponent.description}
             </p>
           </div>
         </header>
-        <form className="space-y-5 text-sm text-slate-600 dark:text-slate-300">
-          {selectedComponentSettings.map((setting) => (
-            <label
-              key={setting.label}
-              className="block space-y-2 rounded-2xl border border-slate-200 bg-white/80 p-4 transition hover:border-emerald-400/50 dark:border-white/5 dark:bg-slate-900/60 dark:hover:border-emerald-400/40"
-            >
-              <span className="text-xs font-medium  text-slate-500 dark:text-slate-500">
-                {setting.label}
-              </span>
-              <input
-                type="text"
-                placeholder={setting.placeholder}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-white/5 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-600"
-              />
-              {setting.helper ? (
-                <p className="text-xs text-slate-500 dark:text-slate-500">
-                  {setting.helper}
-                </p>
-              ) : null}
-            </label>
+
+        {/* 动态配置表单 */}
+        <div className="space-y-4">
+          {builderComponent.configs.map((config) => (
+            <ConfigField
+              key={config.key}
+              config={config}
+              value={selectedInstance.config[config.key]}
+              onChange={(value) => onConfigChange(config.key, value)}
+            />
           ))}
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="flex-1 rounded-xl bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 px-4 py-2 text-sm font-semibold text-emerald-950 shadow-[0_10px_30px_-20px_rgba(16,185,129,0.9)] transition hover:shadow-[0_18px_40px_-24px_rgba(16,185,129,1)] dark:text-white"
-            >
-              应用更改
-            </button>
-            <button
-              type="button"
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 transition hover:border-emerald-500/40 hover:text-emerald-500 dark:border-white/10 dark:text-slate-300 dark:hover:text-emerald-200"
-            >
-              重置
-            </button>
-          </div>
-        </form>
+        </div>
+
+        {/* 操作按钮 */}
+        <div className="pt-4 border-t border-slate-200 dark:border-white/5 space-y-3">
+          <button
+            type="button"
+            onClick={onDelete}
+            className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+          >
+            删除组件
+          </button>
+          <p className="text-xs text-center text-slate-400 dark:text-slate-500">
+            ID: {selectedInstance.instanceId.split("-").pop()}
+          </p>
+        </div>
       </div>
     </aside>
   );
