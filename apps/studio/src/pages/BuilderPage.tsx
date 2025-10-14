@@ -16,12 +16,10 @@ import {
 } from "../shared/messaging";
 
 export function BuilderPage() {
-  const [selectedLibraryComponentId, setSelectedLibraryComponentId] = useState<string>(
-    builderComponents[0]?.id ?? ""
-  );
-  const [selectedCanvasComponentIndex, setSelectedCanvasComponentIndex] = useState<number | null>(
-    null
-  );
+  const [selectedLibraryComponentId, setSelectedLibraryComponentId] =
+    useState<string>(builderComponents[0]?.id ?? "");
+  const [selectedCanvasComponentIndex, setSelectedCanvasComponentIndex] =
+    useState<number | null>(null);
   const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(
     null
   );
@@ -57,7 +55,8 @@ export function BuilderPage() {
     const baseHeight = 560;
     const additionalPerComponent = 220;
     const maxHeight = 1600;
-    const computedHeight = baseHeight + droppedComponentIds.length * additionalPerComponent;
+    const computedHeight =
+      baseHeight + droppedComponentIds.length * additionalPerComponent;
     return `${Math.min(maxHeight, Math.max(baseHeight, computedHeight))}px`;
   }, [droppedComponentIds.length]);
 
@@ -80,7 +79,9 @@ export function BuilderPage() {
     event.preventDefault();
     setIsDraggingOverPreview(false);
     setIsDraggingComponent(false);
-    const componentId = event.dataTransfer.getData("application/builder-component");
+    const componentId = event.dataTransfer.getData(
+      "application/builder-component"
+    );
     if (!componentId) {
       return;
     }
@@ -127,7 +128,8 @@ export function BuilderPage() {
       }
 
       if (event.data?.type === PREVIEW_COMPONENTS_REORDERED_TYPE) {
-        const { componentIds: nextComponentIds, selectedIndex } = event.data.payload;
+        const { componentIds: nextComponentIds, selectedIndex } =
+          event.data.payload;
         setDroppedComponentIds(nextComponentIds);
         setSelectedCanvasComponentIndex(
           typeof selectedIndex === "number" ? selectedIndex : null
@@ -200,7 +202,9 @@ export function BuilderPage() {
               Library
             </span>
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">组件库</h1>
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
+                组件库
+              </h1>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                 挑选模块、组合布局，快速拼装出你的下一版页面。
               </p>
@@ -208,7 +212,9 @@ export function BuilderPage() {
           </header>
           <div className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-[0_20px_60px_-40px_rgba(16,185,129,0.3)] dark:border-white/5 dark:bg-slate-900/50">
             <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-slate-800 dark:text-slate-200">组件</span>
+              <span className="font-semibold text-slate-800 dark:text-slate-200">
+                组件
+              </span>
               <button className="rounded-full border border-slate-200 px-3 py-1 font-medium text-slate-700 transition hover:border-emerald-500/60 hover:text-emerald-500 dark:border-white/10 dark:text-slate-300 dark:hover:border-emerald-500/40 dark:hover:text-emerald-200">
                 新建分组
               </button>
@@ -237,7 +243,9 @@ export function BuilderPage() {
                     }}
                     onMouseLeave={handleMouseLeave}
                     draggable
-                    onDragStart={(event) => handleDragStart(event, component.id)}
+                    onDragStart={(event) =>
+                      handleDragStart(event, component.id)
+                    }
                     onDragEnd={() => {
                       setIsDraggingOverPreview(false);
                       setIsDraggingComponent(false);
@@ -335,12 +343,6 @@ export function BuilderPage() {
             </div>
           </div>
         </div>
-        <footer className="border-t border-slate-200 bg-white/80 px-8 py-5 dark:border-white/5 dark:bg-slate-950/70">
-          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-500">
-            <span>已选组件：{selectedComponentName}</span>
-            <span>自动保存于 2 分钟前</span>
-          </div>
-        </footer>
       </section>
       <aside className="hidden min-h-0 w-[22rem] flex-none overflow-y-auto border-l border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur xl:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
         <div className="space-y-6">
@@ -372,7 +374,9 @@ export function BuilderPage() {
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-white/5 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-600"
                 />
                 {setting.helper ? (
-                  <p className="text-xs text-slate-500 dark:text-slate-500">{setting.helper}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    {setting.helper}
+                  </p>
                 ) : null}
               </label>
             ))}
