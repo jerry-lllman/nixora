@@ -4,13 +4,13 @@ import type {
   BuilderToPreviewMessage,
   ComponentSchema,
   PreviewToBuilderMessage
-} from "../shared/messaging";
+} from "./types/messaging";
 import {
   BUILDER_MESSAGE_TYPE,
   PREVIEW_COMPONENT_SELECTED_TYPE,
   PREVIEW_COMPONENTS_REORDERED_TYPE,
   PREVIEW_READY_TYPE
-} from "../shared/messaging";
+} from "./types/messaging";
 import { previewTemplates } from "./templates";
 
 export function PreviewApp() {
@@ -21,10 +21,7 @@ export function PreviewApp() {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<BuilderToPreviewMessage>) => {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-
+      // 不校验域名，根据事件类型来处理
       if (event.data?.type === BUILDER_MESSAGE_TYPE) {
         const {
           schema: incomingSchema = [],
@@ -42,7 +39,8 @@ export function PreviewApp() {
     window.addEventListener("message", handleMessage);
 
     const readyMessage: PreviewToBuilderMessage = { type: PREVIEW_READY_TYPE };
-    window.parent?.postMessage(readyMessage, window.location.origin);
+    // 发送 ready 消息到 parent（允许任何域名）
+    window.parent?.postMessage(readyMessage, "*");
 
     return () => {
       window.removeEventListener("message", handleMessage);
@@ -65,7 +63,8 @@ export function PreviewApp() {
       }
     };
 
-    window.parent?.postMessage(message, window.location.origin);
+    // 发送到 parent（允许任何域名）
+    window.parent?.postMessage(message, "*");
   }, []);
 
   const handleKeyDown = useCallback(
@@ -187,7 +186,8 @@ export function PreviewApp() {
         instanceIds: nextSchema.map((component) => component.id)
       }
     };
-    window.parent?.postMessage(reorderMessage, window.location.origin);
+    // 发送到 parent（允许任何域名）
+    window.parent?.postMessage(reorderMessage, "*");
 
     resetDragState();
   };

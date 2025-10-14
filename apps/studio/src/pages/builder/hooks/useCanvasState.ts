@@ -112,9 +112,27 @@ export function useCanvasState() {
   }, []);
 
   /**
-   * 重新排序组件（用于拖拽）
+   * 重新排序组件（用于拖拽）- 接受两个 ID
    */
-  const reorderComponents = useCallback((activeId: string, overId: string) => {
+  const reorderComponents = useCallback((activeIdOrIds: string | string[], overId?: string) => {
+    // 如果传入的是数组，则直接按数组顺序重排
+    if (Array.isArray(activeIdOrIds)) {
+      setCanvasComponents((prev) => {
+        const instanceMap = new Map(prev.map((c) => [c.instanceId, c]));
+        const newOrder = activeIdOrIds
+          .map((id) => instanceMap.get(id))
+          .filter((c): c is CanvasComponentInstance => c !== undefined);
+
+        // 更新 order 字段
+        return newOrder.map((item, idx) => ({ ...item, order: idx }));
+      });
+      return;
+    }
+
+    // 原有的逻辑：接受 activeId 和 overId
+    const activeId = activeIdOrIds;
+    if (!overId) return;
+
     setCanvasComponents((prev) => {
       const oldIndex = prev.findIndex((c) => c.instanceId === activeId);
       const newIndex = prev.findIndex((c) => c.instanceId === overId);

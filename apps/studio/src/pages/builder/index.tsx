@@ -74,6 +74,7 @@ export function BuilderPage() {
           canvasComponents={canvasComponents}
           selectedInstanceId={selectedInstanceId}
           isDraggingOverPreview={isDraggingOverPreview}
+          isDraggingComponent={isDraggingComponent}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
           onDragOver={handleDragOver}

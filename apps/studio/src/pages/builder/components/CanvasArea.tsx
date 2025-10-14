@@ -1,101 +1,31 @@
-import {
-  closestCenter,
-  DndContext,
-  DragOverlay,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragStartEvent
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useState, type DragEvent } from "react";
-import { cn } from "../../../lib/utils";
-import type {
-  BuilderComponent,
-  CanvasComponentInstance
-} from "../../../shared/builderComponents";
-import { builderComponents } from "../../../shared/builderComponents";
+import type { DragEvent } from "react";
+import { useMemo } from "react";
+import type { ComponentSchema } from "../../../shared/messaging";
+import { usePreviewMessaging } from "../hooks/usePreviewMessaging";
 
 interface CanvasAreaProps {
-  canvasComponents: CanvasComponentInstance[];
+  canvasComponents: Array<{
+    instanceId: string;
+    componentId: string;
+    config: Record<string, any>;
+    order: number;
+  }>;
   selectedInstanceId: string | null;
   isDraggingOverPreview: boolean;
+  isDraggingComponent?: boolean;
   onDragEnter: (event: DragEvent<HTMLDivElement>) => void;
   onDragLeave: (event: DragEvent<HTMLDivElement>) => void;
   onDragOver: (event: DragEvent<HTMLDivElement>) => void;
   onDrop: (event: DragEvent<HTMLDivElement>) => void;
   onComponentClick: (instanceId: string) => void;
-  onReorder: (activeId: string, overId: string) => void;
-}
-
-// 可排序的组件项
-interface SortableItemProps {
-  instance: CanvasComponentInstance;
-  isSelected: boolean;
-  builderComponent: BuilderComponent;
-  onComponentClick: (instanceId: string) => void;
-}
-
-function SortableItem({
-  instance,
-  isSelected,
-  builderComponent,
-  onComponentClick
-}: SortableItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: instance.instanceId });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: isDragging ? undefined : transition, // 拖拽时禁用过渡，让其立即跟随鼠标
-    opacity: isDragging ? 0.5 : 1,
-    cursor: isDragging ? "grabbing" : "grab"
-  };
-
-  const Component = builderComponent.component;
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      onClick={() => {
-        onComponentClick(instance.instanceId);
-      }}
-      className={cn(
-        "relative transition-all border",
-        isSelected
-          ? "border-emerald-500"
-          : "border-transparent hover:border-emerald-300 hover:border-dashed"
-      )}
-      {...attributes}
-      {...listeners}
-    >
-      {/* 渲染真实组件 */}
-      <div className="pointer-events-none">
-        <Component {...instance.config} />
-      </div>
-    </div>
-  );
+  onReorder: (instanceIds: string[]) => void;
 }
 
 export function CanvasArea({
   canvasComponents,
   selectedInstanceId,
   isDraggingOverPreview,
+  isDraggingComponent = false,
   onDragEnter,
   onDragLeave,
   onDragOver,
@@ -103,129 +33,59 @@ export function CanvasArea({
   onComponentClick,
   onReorder
 }: CanvasAreaProps) {
-  const [activeId, setActiveId] = useState<string | null>(null);
+  // 将 CanvasComponentInstance 转换为 ComponentSchema
+  const schema: ComponentSchema[] = useMemo(() => {
+    return canvasComponents.map((instance) => ({
+      id: instance.instanceId,
+      type: instance.componentId,
+      props: instance.config
+    }));
+  }, [canvasComponents]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8 // 移动8px后才激活拖拽，防止误触但保持灵敏
-      }
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates
-    })
-  );
-
-  const handleDragStart = (event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      onReorder(active.id as string, over.id as string);
+  const { iframeRef } = usePreviewMessaging({
+    schema,
+    selectedInstanceId,
+    onComponentSelected: ({ instanceId }) => {
+      onComponentClick(instanceId);
+    },
+    onComponentsReordered: (instanceIds) => {
+      onReorder(instanceIds);
     }
-
-    setActiveId(null);
-  };
-
-  const handleDragCancel = () => {
-    setActiveId(null);
-  };
-
-  // 获取当前拖拽的组件实例和定义
-  const activeInstance = activeId
-    ? canvasComponents.find((c) => c.instanceId === activeId)
-    : null;
-  const activeBuilderComponent = activeInstance
-    ? builderComponents.find((c) => c.id === activeInstance.componentId)
-    : null;
+  });
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),transparent_55%)]"></div>
-        <div className="relative flex flex-1 justify-center px-8 py-12 overflow-auto">
+    <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),transparent_55%)]"></div>
+      <div className="relative flex flex-1 justify-center px-8 py-12 min-h-0">
+        <div className="relative w-full max-w-4xl min-h-[600px] h-full overflow-auto">
           <div
-            className="relative w-full max-w-4xl min-h-[600px]"
-            onDragEnter={onDragEnter}
-            onDragLeave={onDragLeave}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
+            className={`relative z-10 border bg-white/90 shadow-[0_40px_120px_-40px_rgba(16,185,129,0.25)] backdrop-blur transition dark:bg-slate-950/80 dark:shadow-[0_40px_120px_-40px_rgba(15,118,110,0.6)] min-h-[600px] overflow-hidden ${
+              isDraggingOverPreview
+                ? "border-emerald-400/60 ring-4 ring-emerald-500/20"
+                : "border-slate-200 dark:border-white/5"
+            }`}
           >
-            <div className="absolute inset-x-10 top-0 -z-20 h-72 rounded-full bg-emerald-500/10 blur-3xl"></div>
-            <div
-              className={`relative z-10 rounded-[32px] border bg-white/90 shadow-[0_40px_120px_-40px_rgba(16,185,129,0.25)] backdrop-blur transition dark:bg-slate-950/80 dark:shadow-[0_40px_120px_-40px_rgba(15,118,110,0.6)] min-h-[600px] p-8 ${
-                isDraggingOverPreview
-                  ? "border-emerald-400/60 ring-4 ring-emerald-500/20"
-                  : "border-slate-200 dark:border-white/5"
-              }`}
-            >
-              {canvasComponents.length === 0 ? (
-                <div className="flex h-full items-center justify-center text-center">
-                  <div className="space-y-4">
-                    <div className="text-6xl">📦</div>
-                    <div>
-                      <p className="text-lg font-medium text-slate-700 dark:text-slate-300">
-                        画布空空如也
-                      </p>
-                      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                        从左侧拖拽组件到这里开始设计
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <SortableContext
-                  items={canvasComponents.map((c) => c.instanceId)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <div>
-                    {canvasComponents.map((instance) => {
-                      const builderComponent = builderComponents.find(
-                        (c) => c.id === instance.componentId
-                      );
-                      if (!builderComponent) return null;
-
-                      const isSelected =
-                        instance.instanceId === selectedInstanceId;
-
-                      return (
-                        <SortableItem
-                          key={instance.instanceId}
-                          instance={instance}
-                          isSelected={isSelected}
-                          builderComponent={builderComponent}
-                          onComponentClick={onComponentClick}
-                        />
-                      );
-                    })}
-                  </div>
-                </SortableContext>
-              )}
-            </div>
+            <iframe
+              ref={iframeRef}
+              src="http://localhost:3174"
+              title="Canvas Preview"
+              className="w-full h-full min-h-[600px] border-0"
+              sandbox="allow-scripts allow-same-origin"
+            />
+            {/* 拖拽捕获层 - 当从左侧拖拽组件时覆盖 iframe 以捕获拖拽事件 */}
+            {isDraggingComponent && (
+              <div
+                className="absolute inset-0 pointer-events-auto"
+                onDragEnter={onDragEnter}
+                onDragLeave={onDragLeave}
+                onDragOver={onDragOver}
+                onDrop={onDrop}
+                style={{ zIndex: 50 }}
+              />
+            )}
           </div>
         </div>
       </div>
-      <DragOverlay>
-        {activeInstance && activeBuilderComponent ? (
-          <div className="relative rounded-xl  border border-emerald-500 opacity-90 bg-white dark:bg-slate-950">
-            <div className="p-4 pointer-events-none">
-              {(() => {
-                const Component = activeBuilderComponent.component;
-                return <Component {...activeInstance.config} />;
-              })()}
-            </div>
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+    </div>
   );
 }

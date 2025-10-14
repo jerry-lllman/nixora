@@ -35,10 +35,7 @@ export function usePreviewMessaging({
     const handlePreviewMessage = (
       event: MessageEvent<PreviewToBuilderMessage>
     ) => {
-      if (event.origin !== window.location.origin) {
-        return;
-      }
-
+      // 不校验域名，根据事件类型来处理
       if (event.data?.type === PREVIEW_READY_TYPE) {
         setPreviewReadySignal((signal) => signal + 1);
         return;
@@ -83,7 +80,8 @@ export function usePreviewMessaging({
       }
     };
 
-    previewWindow.postMessage(message, window.location.origin);
+    // 发送消息到 preview 窗口（允许任何域名）
+    previewWindow.postMessage(message, "*");
   }, [
     selectedInstanceId,
     previewReadySignal,
