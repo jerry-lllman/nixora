@@ -8,11 +8,18 @@ import type {
   BuilderToPreviewMessage,
   PreviewToBuilderMessage
 } from "../shared/messaging";
-import { BUILDER_MESSAGE_TYPE, PREVIEW_READY_TYPE } from "../shared/messaging";
+import {
+  BUILDER_MESSAGE_TYPE,
+  PREVIEW_COMPONENT_SELECTED_TYPE,
+  PREVIEW_READY_TYPE
+} from "../shared/messaging";
 
 export function BuilderPage() {
-  const [selectedComponentId, setSelectedComponentId] = useState<string>(
+  const [selectedLibraryComponentId, setSelectedLibraryComponentId] = useState<string>(
     builderComponents[0]?.id ?? ""
+  );
+  const [selectedCanvasComponentIndex, setSelectedCanvasComponentIndex] = useState<number | null>(
+    null
   );
   const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(
     null
@@ -20,17 +27,27 @@ export function BuilderPage() {
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [droppedComponentIds, setDroppedComponentIds] = useState<string[]>([]);
   const [isDraggingOverPreview, setIsDraggingOverPreview] = useState(false);
+  const [isDraggingComponent, setIsDraggingComponent] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [previewReadySignal, setPreviewReadySignal] = useState(0);
 
+  const selectedCanvasComponentId = useMemo(() => {
+    if (selectedCanvasComponentIndex === null) {
+      return null;
+    }
+    return droppedComponentIds[selectedCanvasComponentIndex] ?? null;
+  }, [droppedComponentIds, selectedCanvasComponentIndex]);
+
   const selectedComponent = useMemo<BuilderComponent | null>(() => {
-    const fallback = builderComponents[0] ?? null;
+    if (!selectedCanvasComponentId) {
+      return null;
+    }
     return (
       builderComponents.find(
-        (component) => component.id === selectedComponentId
-      ) ?? fallback
+        (component) => component.id === selectedCanvasComponentId
+      ) ?? null
     );
-  }, [selectedComponentId]);
+  }, [selectedCanvasComponentId]);
 
   const selectedComponentName = selectedComponent?.name ?? "未选择";
   const selectedComponentSettings = selectedComponent?.settings ?? [];
@@ -49,7 +66,8 @@ export function BuilderPage() {
   ) => {
     event.dataTransfer.setData("application/builder-component", componentId);
     event.dataTransfer.effectAllowed = "copy";
-    setSelectedComponentId(componentId);
+    setSelectedLibraryComponentId(componentId);
+    setIsDraggingComponent(true);
   };
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
@@ -60,12 +78,17 @@ export function BuilderPage() {
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setIsDraggingOverPreview(false);
+    setIsDraggingComponent(false);
     const componentId = event.dataTransfer.getData("application/builder-component");
     if (!componentId) {
       return;
     }
-    setDroppedComponentIds((prev) => [...prev, componentId]);
-    setSelectedComponentId(componentId);
+    setDroppedComponentIds((prev) => {
+      const next = [...prev, componentId];
+      setSelectedCanvasComponentIndex(next.length - 1);
+      return next;
+    });
+    setSelectedLibraryComponentId(componentId);
   };
 
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {
@@ -99,6 +122,11 @@ export function BuilderPage() {
 
       if (event.data?.type === PREVIEW_READY_TYPE) {
         setPreviewReadySignal((signal) => signal + 1);
+        return;
+      }
+
+      if (event.data?.type === PREVIEW_COMPONENT_SELECTED_TYPE) {
+        setSelectedCanvasComponentIndex(event.data.payload.index);
       }
     };
 
@@ -122,12 +150,20 @@ export function BuilderPage() {
     const message: BuilderToPreviewMessage = {
       type: BUILDER_MESSAGE_TYPE,
       payload: {
-        componentIds: droppedComponentIds
+        componentIds: droppedComponentIds,
+        selectedInstanceIndex: selectedCanvasComponentId
+          ? selectedCanvasComponentIndex
+          : null
       }
     };
 
     previewWindow.postMessage(message, window.location.origin);
-  }, [droppedComponentIds, previewReadySignal]);
+  }, [
+    droppedComponentIds,
+    previewReadySignal,
+    selectedCanvasComponentId,
+    selectedCanvasComponentIndex
+  ]);
 
   const handleMouseEnter = (componentId: string) => {
     if (hoverTimeoutRef.current) {
@@ -179,12 +215,12 @@ export function BuilderPage() {
             </div>
             <div className="mt-5 grid grid-cols-3 gap-3">
               {builderComponents.map((component) => {
-                const isActive = component.id === selectedComponentId;
+                const isActive = component.id === selectedLibraryComponentId;
                 return (
                   <button
                     key={component.id}
                     onClick={() => {
-                      setSelectedComponentId(component.id);
+                      setSelectedLibraryComponentId(component.id);
                     }}
                     onMouseEnter={() => {
                       handleMouseEnter(component.id);
@@ -194,6 +230,7 @@ export function BuilderPage() {
                     onDragStart={(event) => handleDragStart(event, component.id)}
                     onDragEnd={() => {
                       setIsDraggingOverPreview(false);
+                      setIsDraggingComponent(false);
                     }}
                     className={`group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border px-4 py-5 text-center transition ${
                       isActive
@@ -237,7 +274,7 @@ export function BuilderPage() {
             </Link>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden text-xs uppercase tracking-[0.35em] text-slate-500 dark:text-slate-500 sm:block">
+            <span className="hidden text-xs uppercase text-slate-500 dark:text-slate-500 sm:block">
               画布尺寸
             </span>
             <nav className="flex items-center gap-1 rounded-full border border-slate-200 bg-white/70 p-1 text-xs dark:border-white/5 dark:bg-slate-900/70">
@@ -278,19 +315,22 @@ export function BuilderPage() {
               <iframe
                 ref={iframeRef}
                 title="组件预览"
-                className="relative z-10 w-full overflow-hidden rounded-[32px] border-0 bg-transparent text-left shadow-[0_24px_80px_-50px_rgba(16,185,129,0.45)] pointer-events-none"
+                className="relative z-10 w-full overflow-hidden rounded-[32px] border-0 bg-transparent text-left shadow-[0_24px_80px_-50px_rgba(16,185,129,0.45)]"
                 src="/preview.html"
-                style={{ height: previewHeight }}
+                style={{
+                  height: previewHeight,
+                  pointerEvents: isDraggingComponent ? "none" : "auto"
+                }}
               />
             </div>
           </div>
-          <footer className="border-t border-slate-200 bg-white/80 px-8 py-5 dark:border-white/5 dark:bg-slate-950/70">
-            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-500">
-              <span>已选组件：{selectedComponentName}</span>
-              <span>自动保存于 2 分钟前</span>
-            </div>
-          </footer>
         </div>
+        <footer className="border-t border-slate-200 bg-white/80 px-8 py-5 dark:border-white/5 dark:bg-slate-950/70">
+          <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-500">
+            <span>已选组件：{selectedComponentName}</span>
+            <span>自动保存于 2 分钟前</span>
+          </div>
+        </footer>
       </section>
       <aside className="hidden min-h-0 w-[22rem] flex-none overflow-y-auto border-l border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur xl:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
         <div className="space-y-6">

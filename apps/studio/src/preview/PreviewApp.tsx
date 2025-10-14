@@ -1,13 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import type { KeyboardEvent } from "react";
 import type {
   BuilderToPreviewMessage,
   PreviewToBuilderMessage
 } from "../shared/messaging";
-import { BUILDER_MESSAGE_TYPE, PREVIEW_READY_TYPE } from "../shared/messaging";
+import {
+  BUILDER_MESSAGE_TYPE,
+  PREVIEW_COMPONENT_SELECTED_TYPE,
+  PREVIEW_READY_TYPE
+} from "../shared/messaging";
 import { previewTemplates } from "./templates";
 
 export function PreviewApp() {
   const [componentIds, setComponentIds] = useState<string[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<BuilderToPreviewMessage>) => {
@@ -16,7 +22,19 @@ export function PreviewApp() {
       }
 
       if (event.data?.type === BUILDER_MESSAGE_TYPE) {
-        setComponentIds(event.data.payload.componentIds);
+        const { componentIds: incomingComponentIds, selectedInstanceIndex } =
+          event.data.payload;
+        setComponentIds(incomingComponentIds);
+
+        if (
+          typeof selectedInstanceIndex === "number" &&
+          selectedInstanceIndex >= 0 &&
+          selectedInstanceIndex < incomingComponentIds.length
+        ) {
+          setSelectedIndex(selectedInstanceIndex);
+        } else {
+          setSelectedIndex(null);
+        }
       }
     };
 
@@ -30,21 +48,30 @@ export function PreviewApp() {
     };
   }, []);
 
-  const renderedComponents = useMemo(() => {
-    if (componentIds.length === 0) {
-      return null;
-    }
-
-    return componentIds.map((componentId, index) => {
-      const TemplateComponent = previewTemplates[componentId] ?? null;
-      if (!TemplateComponent) {
-        return null;
+  const handleSelect = (componentId: string, index: number) => {
+    setSelectedIndex(index);
+    const message: PreviewToBuilderMessage = {
+      type: PREVIEW_COMPONENT_SELECTED_TYPE,
+      payload: {
+        componentId,
+        index
       }
-      return <TemplateComponent key={`${componentId}-${index}`} />;
-    });
-  }, [componentIds]);
+    };
+    window.parent?.postMessage(message, window.location.origin);
+  };
 
-  if (!renderedComponents) {
+  const handleKeyDown = (
+    event: KeyboardEvent<HTMLDivElement>,
+    componentId: string,
+    index: number
+  ) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleSelect(componentId, index);
+    }
+  };
+
+  if (componentIds.length === 0) {
     return (
       <div className="preview-shell">
         <div className="empty-state">
@@ -55,5 +82,31 @@ export function PreviewApp() {
     );
   }
 
-  return <div className="preview-shell">{renderedComponents}</div>;
+  return (
+    <div className="preview-shell">
+      {componentIds.map((componentId, index) => {
+        const TemplateComponent = previewTemplates[componentId] ?? null;
+        if (!TemplateComponent) {
+          return null;
+        }
+
+        const isSelected = index === selectedIndex;
+
+        return (
+          <div
+            key={`${componentId}-${index}`}
+            role="button"
+            tabIndex={0}
+            className={`component-instance${
+              isSelected ? " component-instance--selected" : ""
+            }`}
+            onClick={() => handleSelect(componentId, index)}
+            onKeyDown={(event) => handleKeyDown(event, componentId, index)}
+          >
+            <TemplateComponent />
+          </div>
+        );
+      })}
+    </div>
+  );
 }

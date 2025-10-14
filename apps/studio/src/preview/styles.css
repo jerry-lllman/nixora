@@ -22,6 +22,34 @@ body {
   padding: 56px;
 }
 
+.component-instance {
+  position: relative;
+  border-radius: 32px;
+  cursor: pointer;
+  outline: none;
+}
+
+.component-instance .component-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.component-instance:hover .component-card {
+  transform: translateY(-4px);
+  box-shadow: 0 36px 100px -48px rgba(16, 185, 129, 0.58);
+}
+
+.component-instance:focus-visible .component-card {
+  border-color: rgba(59, 130, 246, 0.45);
+  box-shadow:
+    0 0 0 4px rgba(59, 130, 246, 0.25),
+    0 32px 90px -48px rgba(16, 185, 129, 0.5);
+}
+
+.component-instance--selected .component-card {
+  border-color: rgba(16, 185, 129, 0.55);
+  box-shadow: 0 42px 120px -40px rgba(16, 185, 129, 0.65);
+}
+
 .component-card {
   border-radius: 28px;
   border: 1px solid rgba(15, 118, 110, 0.12);

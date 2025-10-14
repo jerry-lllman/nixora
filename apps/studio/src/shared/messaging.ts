@@ -1,14 +1,23 @@
-export type BuilderToPreviewMessage =
+export type BuilderToPreviewMessage = {
+  type: typeof BUILDER_MESSAGE_TYPE;
+  payload: {
+    componentIds: string[];
+    selectedInstanceIndex?: number | null;
+  };
+};
+
+export type PreviewToBuilderMessage =
   | {
-      type: "builder:update-components";
+      type: typeof PREVIEW_READY_TYPE;
+    }
+  | {
+      type: typeof PREVIEW_COMPONENT_SELECTED_TYPE;
       payload: {
-        componentIds: string[];
+        componentId: string;
+        index: number;
       };
     };
 
-export type PreviewToBuilderMessage = {
-  type: "preview:ready";
-};
-
 export const BUILDER_MESSAGE_TYPE = "builder:update-components";
 export const PREVIEW_READY_TYPE = "preview:ready";
+export const PREVIEW_COMPONENT_SELECTED_TYPE = "preview:component-selected";
