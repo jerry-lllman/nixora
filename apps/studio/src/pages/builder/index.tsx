@@ -3,10 +3,10 @@ import { builderComponents } from "../../shared/builderComponents";
 import { BuilderHeader } from "./components/BuilderHeader";
 import { CanvasArea } from "./components/CanvasArea";
 import { ComponentLibrary } from "./components/ComponentLibrary";
-import { SettingsPanel } from "./components/SettingsPanel";
+import { SettingsPanel } from "./components/settings";
+import { useCanvasState } from "./hooks/useCanvasState";
 import { useComponentHover } from "./hooks/useComponentHover";
 import { useDragAndDrop } from "./hooks/useDragAndDrop";
-import { useCanvasState } from "./hooks/useCanvasState";
 
 export function BuilderPage() {
   const [selectedLibraryComponentId, setSelectedLibraryComponentId] =

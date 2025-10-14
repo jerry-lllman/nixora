@@ -7,7 +7,7 @@ interface CanvasAreaProps {
   canvasComponents: Array<{
     instanceId: string;
     componentId: string;
-    config: Record<string, any>;
+    props: Record<string, any>;
     order: number;
   }>;
   selectedInstanceId: string | null;
@@ -38,7 +38,7 @@ export function CanvasArea({
     return canvasComponents.map((instance) => ({
       id: instance.instanceId,
       type: instance.componentId,
-      props: instance.config
+      props: instance.props
     }));
   }, [canvasComponents]);
 

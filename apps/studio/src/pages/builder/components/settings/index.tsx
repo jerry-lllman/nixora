@@ -1,5 +1,7 @@
-import type { CanvasComponentInstance, BuilderComponent } from "../../../shared/builderComponents";
-import { ConfigField } from "./ConfigField";
+import type {
+  BuilderComponent,
+  CanvasComponentInstance
+} from "../../../../shared/builderComponents";
 
 interface SettingsPanelProps {
   selectedInstance: CanvasComponentInstance | null;
@@ -49,16 +51,10 @@ export function SettingsPanel({
         </header>
 
         {/* 动态配置表单 */}
-        <div className="space-y-4">
-          {builderComponent.configs.map((config) => (
-            <ConfigField
-              key={config.key}
-              config={config}
-              value={selectedInstance.config[config.key]}
-              onChange={(value) => onConfigChange(config.key, value)}
-            />
-          ))}
-        </div>
+        <builderComponent.ConfigPanel
+          value={selectedInstance.props}
+          onChange={onConfigChange}
+        />
 
         {/* 操作按钮 */}
         <div className="pt-4 border-t border-slate-200 dark:border-white/5 space-y-3">

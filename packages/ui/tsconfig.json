@@ -5,7 +5,11 @@
     "declaration": true,
     "declarationDir": "dist",
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src"],
   "exclude": ["dist", "node_modules"]

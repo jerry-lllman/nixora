@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { DragEvent, KeyboardEvent } from "react";
+import { previewTemplates } from "./templates";
 import type {
   BuilderToPreviewMessage,
   ComponentSchema,
@@ -11,11 +12,12 @@ import {
   PREVIEW_COMPONENTS_REORDERED_TYPE,
   PREVIEW_READY_TYPE
 } from "./types/messaging";
-import { previewTemplates } from "./templates";
 
 export function PreviewApp() {
   const [schema, setSchema] = useState<ComponentSchema[]>([]);
-  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
+    null
+  );
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
@@ -29,7 +31,8 @@ export function PreviewApp() {
         } = event.data.payload;
         setSchema(incomingSchema);
         setSelectedInstanceId(
-          typeof incomingSelectedId === "string" && incomingSelectedId.length > 0
+          typeof incomingSelectedId === "string" &&
+            incomingSelectedId.length > 0
             ? incomingSelectedId
             : null
         );
@@ -52,23 +55,30 @@ export function PreviewApp() {
     setDropIndex(null);
   };
 
-  const sendComponentSelected = useCallback((component: ComponentSchema, index: number) => {
-    setSelectedInstanceId(component.id);
-    const message: PreviewToBuilderMessage = {
-      type: PREVIEW_COMPONENT_SELECTED_TYPE,
-      payload: {
-        instanceId: component.id,
-        componentType: component.type,
-        index
-      }
-    };
+  const sendComponentSelected = useCallback(
+    (component: ComponentSchema, index: number) => {
+      setSelectedInstanceId(component.id);
+      const message: PreviewToBuilderMessage = {
+        type: PREVIEW_COMPONENT_SELECTED_TYPE,
+        payload: {
+          instanceId: component.id,
+          componentType: component.type,
+          index
+        }
+      };
 
-    // 发送到 parent（允许任何域名）
-    window.parent?.postMessage(message, "*");
-  }, []);
+      // 发送到 parent（允许任何域名）
+      window.parent?.postMessage(message, "*");
+    },
+    []
+  );
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>, component: ComponentSchema, index: number) => {
+    (
+      event: KeyboardEvent<HTMLDivElement>,
+      component: ComponentSchema,
+      index: number
+    ) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         sendComponentSelected(component, index);
@@ -89,7 +99,10 @@ export function PreviewApp() {
     sendComponentSelected(component, index);
   };
 
-  const handleDragOverComponent = (event: DragEvent<HTMLDivElement>, index: number) => {
+  const handleDragOverComponent = (
+    event: DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
     if (draggingIndex === null) {
       return;
     }
@@ -115,7 +128,9 @@ export function PreviewApp() {
 
     if (event.target === event.currentTarget) {
       const instances = Array.from(
-        event.currentTarget.querySelectorAll<HTMLDivElement>(".component-instance")
+        event.currentTarget.querySelectorAll<HTMLDivElement>(
+          ".component-instance"
+        )
       );
       const pointerY = event.clientY;
 

@@ -28,6 +28,7 @@ export function usePreviewMessaging({
   onComponentSelected,
   onComponentsReordered
 }: UsePreviewMessagingProps) {
+
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [previewReadySignal, setPreviewReadySignal] = useState(0);
 

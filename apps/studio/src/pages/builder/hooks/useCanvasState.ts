@@ -16,16 +16,11 @@ export function useCanvasState() {
     const builderComponent = builderComponents.find((c) => c.id === componentId);
     if (!builderComponent) return;
 
-    // 从 configs 中提取默认配置
-    const defaultConfig: Record<string, any> = {};
-    builderComponent.configs.forEach((config) => {
-      defaultConfig[config.key] = config.defaultValue;
-    });
-
+    // 使用组件定义的默认配置
     const newInstance: CanvasComponentInstance = {
       instanceId: `${componentId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       componentId,
-      config: defaultConfig,
+      props: { ...builderComponent.props }, // 克隆默认配置
       order: canvasComponents.length
     };
 
@@ -50,7 +45,7 @@ export function useCanvasState() {
     setCanvasComponents((prev) =>
       prev.map((instance) =>
         instance.instanceId === instanceId
-          ? { ...instance, config: { ...instance.config, [key]: value } }
+          ? { ...instance, props: { ...instance.props, [key]: value } }
           : instance
       )
     );
@@ -59,11 +54,11 @@ export function useCanvasState() {
   /**
    * 更新整个组件配置对象
    */
-  const updateComponentConfigs = useCallback((instanceId: string, newConfig: Record<string, any>) => {
+  const updateComponentConfigs = useCallback((instanceId: string, newProps: Record<string, any>) => {
     setCanvasComponents((prev) =>
       prev.map((instance) =>
         instance.instanceId === instanceId
-          ? { ...instance, config: { ...instance.config, ...newConfig } }
+          ? { ...instance, props: { ...instance.props, ...newProps } }
           : instance
       )
     );
