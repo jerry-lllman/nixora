@@ -1,5 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
-import type { DragEvent, KeyboardEvent } from "react";
+import type { KeyboardEvent } from "react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  type DragEndEvent,
+  type DragStartEvent,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { previewTemplates } from "./templates";
 import type {
   BuilderToPreviewMessage,
@@ -18,8 +36,15 @@ export function PreviewApp() {
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
     null
   );
-  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const [dropIndex, setDropIndex] = useState<number | null>(null);
+
+  const sensors = useSensors(
+    useSensor(
+      PointerSensor,
+      // Slight movement threshold avoids accidental drags on click
+      { activationConstraint: { distance: 4 } }
+    ),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent<BuilderToPreviewMessage>) => {
@@ -50,10 +75,16 @@ export function PreviewApp() {
     };
   }, []);
 
-  const resetDragState = () => {
-    setDraggingIndex(null);
-    setDropIndex(null);
-  };
+  const sendComponentsReordered = useCallback((nextSchema: ComponentSchema[]) => {
+    const reorderMessage: PreviewToBuilderMessage = {
+      type: PREVIEW_COMPONENTS_REORDERED_TYPE,
+      payload: {
+        instanceIds: nextSchema.map((component) => component.id)
+      }
+    };
+    // 发送到 parent（允许任何域名）
+    window.parent?.postMessage(reorderMessage, "*");
+  }, []);
 
   const sendComponentSelected = useCallback(
     (component: ComponentSchema, index: number) => {
@@ -87,125 +118,54 @@ export function PreviewApp() {
     [sendComponentSelected]
   );
 
-  const handleDragStart = (
-    event: DragEvent<HTMLDivElement>,
-    component: ComponentSchema,
-    index: number
-  ) => {
-    event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", component.id);
-    setDraggingIndex(index);
-    setDropIndex(index);
-    sendComponentSelected(component, index);
-  };
+  const handleDragStart = useCallback(
+    (event: DragStartEvent) => {
+      const activeId = String(event.active.id);
+      const index = schema.findIndex((component) => component.id === activeId);
+      if (index === -1) {
+        return;
+      }
 
-  const handleDragOverComponent = (
-    event: DragEvent<HTMLDivElement>,
-    index: number
-  ) => {
-    if (draggingIndex === null) {
-      return;
-    }
+      sendComponentSelected(schema[index], index);
+    },
+    [schema, sendComponentSelected]
+  );
 
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over) {
+        return;
+      }
 
-    const rect = event.currentTarget.getBoundingClientRect();
-    const insertBefore = event.clientY < rect.top + rect.height / 2;
-    const nextDropIndex = insertBefore ? index : index + 1;
-    if (dropIndex !== nextDropIndex) {
-      setDropIndex(nextDropIndex);
-    }
-  };
+      const activeId = String(active.id);
+      const overId = String(over.id);
+      if (activeId === overId) {
+        return;
+      }
 
-  const handleShellDragOver = (event: DragEvent<HTMLDivElement>) => {
-    if (draggingIndex === null) {
-      return;
-    }
-
-    event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
-
-    if (event.target === event.currentTarget) {
-      const instances = Array.from(
-        event.currentTarget.querySelectorAll<HTMLDivElement>(
-          ".component-instance"
-        )
-      );
-      const pointerY = event.clientY;
-
-      let nextIndex = schema.length;
-      for (let index = 0; index < instances.length; index += 1) {
-        const instance = instances[index];
-        if (!instance) {
-          continue;
+      setSchema((previous) => {
+        const oldIndex = previous.findIndex(
+          (component) => component.id === activeId
+        );
+        const newIndex = previous.findIndex(
+          (component) => component.id === overId
+        );
+        if (
+          oldIndex === -1 ||
+          newIndex === -1 ||
+          oldIndex === newIndex
+        ) {
+          return previous;
         }
-        const rect = instance.getBoundingClientRect();
-        if (pointerY < rect.top + rect.height / 2) {
-          nextIndex = index;
-          break;
-        }
-      }
 
-      if (dropIndex !== nextIndex) {
-        setDropIndex(nextIndex);
-      }
-    }
-  };
-
-  const handleShellDragLeave = (event: DragEvent<HTMLDivElement>) => {
-    if (draggingIndex === null) {
-      return;
-    }
-
-    const relatedTarget = event.relatedTarget as Node | null;
-    if (relatedTarget && event.currentTarget.contains(relatedTarget)) {
-      return;
-    }
-
-    setDropIndex(null);
-  };
-
-  const handleDropOnShell = (event: DragEvent<HTMLDivElement>) => {
-    if (draggingIndex === null) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-
-    if (dropIndex === null) {
-      resetDragState();
-      return;
-    }
-
-    if (dropIndex < 0 || dropIndex > schema.length) {
-      resetDragState();
-      return;
-    }
-
-    const targetIndex = dropIndex > draggingIndex ? dropIndex - 1 : dropIndex;
-    if (targetIndex === draggingIndex) {
-      resetDragState();
-      return;
-    }
-
-    const nextSchema = [...schema];
-    const [moved] = nextSchema.splice(draggingIndex, 1);
-    nextSchema.splice(targetIndex, 0, moved);
-    setSchema(nextSchema);
-
-    const reorderMessage: PreviewToBuilderMessage = {
-      type: PREVIEW_COMPONENTS_REORDERED_TYPE,
-      payload: {
-        instanceIds: nextSchema.map((component) => component.id)
-      }
-    };
-    // 发送到 parent（允许任何域名）
-    window.parent?.postMessage(reorderMessage, "*");
-
-    resetDragState();
-  };
+        const nextSchema = arrayMove(previous, oldIndex, newIndex);
+        sendComponentsReordered(nextSchema);
+        return nextSchema;
+      });
+    },
+    [sendComponentsReordered]
+  );
 
   if (schema.length === 0) {
     return (
@@ -218,51 +178,88 @@ export function PreviewApp() {
     );
   }
 
+  const sortableIds = schema.map((component) => component.id);
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext
+        items={sortableIds}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="preview-shell">
+          {schema.map((component, index) => (
+            <SortableComponentInstance
+              key={component.id}
+              component={component}
+              index={index}
+              isSelected={component.id === selectedInstanceId}
+              onSelect={sendComponentSelected}
+              onKeyDown={handleKeyDown}
+            />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+type SortableComponentInstanceProps = {
+  component: ComponentSchema;
+  index: number;
+  isSelected: boolean;
+  onSelect: (component: ComponentSchema, index: number) => void;
+  onKeyDown: (
+    event: KeyboardEvent<HTMLDivElement>,
+    component: ComponentSchema,
+    index: number
+  ) => void;
+};
+
+function SortableComponentInstance({
+  component,
+  index,
+  isSelected,
+  onSelect,
+  onKeyDown
+}: SortableComponentInstanceProps) {
+  const TemplateComponent = previewTemplates[component.type] ?? null;
+
+  const { attributes, isDragging, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: component.id });
+
+  if (!TemplateComponent) {
+    return null;
+  }
+
+  const instanceClassName = [
+    "component-instance",
+    isSelected ? "component-instance--selected" : "",
+    isDragging ? "component-instance--dragging" : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  };
+
   return (
     <div
-      className="preview-shell"
-      onDragOver={handleShellDragOver}
-      onDragLeave={handleShellDragLeave}
-      onDrop={handleDropOnShell}
+      ref={setNodeRef}
+      className={instanceClassName}
+      style={style}
+      onClick={() => onSelect(component, index)}
+      onKeyDown={(event) => onKeyDown(event, component, index)}
+      {...attributes}
+      {...listeners}
     >
-      {schema.map((component, index) => {
-        const TemplateComponent = previewTemplates[component.type] ?? null;
-
-        if (!TemplateComponent) {
-          return null;
-        }
-
-        const isSelected = component.id === selectedInstanceId;
-        const isDragging = index === draggingIndex;
-        const showDropBefore = dropIndex === index;
-        const showDropAfter = dropIndex === index + 1;
-        const instanceClassName = [
-          "component-instance",
-          isSelected ? "component-instance--selected" : "",
-          isDragging ? "component-instance--dragging" : "",
-          showDropBefore ? "component-instance--drop-before" : "",
-          showDropAfter ? "component-instance--drop-after" : ""
-        ]
-          .filter(Boolean)
-          .join(" ");
-
-        return (
-          <div
-            key={component.id}
-            role="button"
-            tabIndex={0}
-            className={instanceClassName}
-            draggable
-            onClick={() => sendComponentSelected(component, index)}
-            onKeyDown={(event) => handleKeyDown(event, component, index)}
-            onDragStart={(event) => handleDragStart(event, component, index)}
-            onDragOver={(event) => handleDragOverComponent(event, index)}
-            onDragEnd={resetDragState}
-          >
-            <TemplateComponent schema={component} />
-          </div>
-        );
-      })}
+      <TemplateComponent schema={component} />
     </div>
   );
 }
