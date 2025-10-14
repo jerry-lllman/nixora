@@ -16,8 +16,17 @@ export type PreviewToBuilderMessage =
         componentId: string;
         index: number;
       };
+    }
+  | {
+      type: typeof PREVIEW_COMPONENTS_REORDERED_TYPE;
+      payload: {
+        componentIds: string[];
+        selectedIndex: number | null;
+      };
     };
 
 export const BUILDER_MESSAGE_TYPE = "builder:update-components";
 export const PREVIEW_READY_TYPE = "preview:ready";
 export const PREVIEW_COMPONENT_SELECTED_TYPE = "preview:component-selected";
+export const PREVIEW_COMPONENTS_REORDERED_TYPE =
+  "preview:components-reordered";

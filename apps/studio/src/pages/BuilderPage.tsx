@@ -11,6 +11,7 @@ import type {
 import {
   BUILDER_MESSAGE_TYPE,
   PREVIEW_COMPONENT_SELECTED_TYPE,
+  PREVIEW_COMPONENTS_REORDERED_TYPE,
   PREVIEW_READY_TYPE
 } from "../shared/messaging";
 
@@ -122,6 +123,15 @@ export function BuilderPage() {
 
       if (event.data?.type === PREVIEW_READY_TYPE) {
         setPreviewReadySignal((signal) => signal + 1);
+        return;
+      }
+
+      if (event.data?.type === PREVIEW_COMPONENTS_REORDERED_TYPE) {
+        const { componentIds: nextComponentIds, selectedIndex } = event.data.payload;
+        setDroppedComponentIds(nextComponentIds);
+        setSelectedCanvasComponentIndex(
+          typeof selectedIndex === "number" ? selectedIndex : null
+        );
         return;
       }
 

@@ -25,8 +25,39 @@ body {
 .component-instance {
   position: relative;
   border-radius: 32px;
-  cursor: pointer;
+  cursor: grab;
   outline: none;
+  transition: opacity 0.2s ease;
+}
+
+.component-instance:active {
+  cursor: grabbing;
+}
+
+.component-instance--dragging {
+  opacity: 0.75;
+  cursor: grabbing;
+}
+
+.component-instance--drop-before::before,
+.component-instance--drop-after::after {
+  content: "";
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  height: 4px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.45);
+  box-shadow: 0 18px 40px -24px rgba(16, 185, 129, 0.55);
+  pointer-events: none;
+}
+
+.component-instance--drop-before::before {
+  top: -18px;
+}
+
+.component-instance--drop-after::after {
+  bottom: -18px;
 }
 
 .component-instance .component-card {
