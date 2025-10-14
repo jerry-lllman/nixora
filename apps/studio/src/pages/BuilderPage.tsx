@@ -51,15 +51,6 @@ export function BuilderPage() {
   const selectedComponentName = selectedComponent?.name ?? "未选择";
   const selectedComponentSettings = selectedComponent?.settings ?? [];
 
-  const previewHeight = useMemo(() => {
-    const baseHeight = 560;
-    const additionalPerComponent = 220;
-    const maxHeight = 1600;
-    const computedHeight =
-      baseHeight + droppedComponentIds.length * additionalPerComponent;
-    return `${Math.min(maxHeight, Math.max(baseHeight, computedHeight))}px`;
-  }, [droppedComponentIds.length]);
-
   const handleDragStart = (
     event: DragEvent<HTMLButtonElement>,
     componentId: string
@@ -314,7 +305,7 @@ export function BuilderPage() {
         </header>
         <div className="relative flex flex-1 min-h-0 flex-col overflow-hidden">
           <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),transparent_55%)]"></div>
-          <div className="relative flex flex-1 justify-center overflow-y-auto px-8 py-12">
+          <div className="relative flex flex-1 justify-center px-8 py-12">
             <div
               className="relative w-full max-w-4xl"
               onDragEnter={handleDragEnter}
@@ -336,7 +327,7 @@ export function BuilderPage() {
                 className="relative z-10 w-full overflow-hidden rounded-[32px] border-0 bg-transparent text-left shadow-[0_24px_80px_-50px_rgba(16,185,129,0.45)]"
                 src="/preview.html"
                 style={{
-                  height: previewHeight,
+                  height: "100%",
                   pointerEvents: isDraggingComponent ? "none" : "auto"
                 }}
               />
