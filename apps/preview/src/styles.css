@@ -26,10 +26,19 @@ body {
 
 .component-instance {
   position: relative;
-  border-radius: 32px;
+  border: 2px solid transparent;
   cursor: grab;
   outline: none;
-  transition: opacity 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.component-instance:hover {
+  border-color: rgba(15, 118, 110, 0.35);
+  border-style: dashed;
+}
+
+.component-instance:focus-visible {
+  border-color: rgba(59, 130, 246, 0.45); 
 }
 
 .component-instance:active {
@@ -77,10 +86,17 @@ body {
     0 32px 90px -48px rgba(16, 185, 129, 0.5);
 }
 
+.component-instance.component-instance--selected {
+  border-color: rgba(16, 185, 129, 0.55);
+  border-style: solid !important;
+}
+
 .component-instance--selected .component-card {
   border-color: rgba(16, 185, 129, 0.55);
   box-shadow: 0 42px 120px -40px rgba(16, 185, 129, 0.65);
 }
+
+
 
 .component-card {
   border: 1px solid rgba(15, 118, 110, 0.12);
