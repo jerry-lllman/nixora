@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type {
   BuilderToPreviewMessage,
+  ComponentSchema,
   PreviewToBuilderMessage
 } from "../../../shared/messaging";
 import {
@@ -11,22 +12,21 @@ import {
 } from "../../../shared/messaging";
 
 interface UsePreviewMessagingProps {
-  droppedComponentIds: string[];
-  selectedCanvasComponentId: string | null;
-  selectedCanvasComponentIndex: number | null;
-  onComponentsReordered: (
-    componentIds: string[],
-    selectedIndex: number | null
-  ) => void;
-  onComponentSelected: (index: number) => void;
+  schema: ComponentSchema[];
+  selectedInstanceId: string | null;
+  onComponentSelected: (selection: {
+    instanceId: string;
+    componentType: string;
+    index: number;
+  }) => void;
+  onComponentsReordered: (instanceIds: string[]) => void;
 }
 
 export function usePreviewMessaging({
-  droppedComponentIds,
-  selectedCanvasComponentId,
-  selectedCanvasComponentIndex,
-  onComponentsReordered,
-  onComponentSelected
+  schema,
+  selectedInstanceId,
+  onComponentSelected,
+  onComponentsReordered
 }: UsePreviewMessagingProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [previewReadySignal, setPreviewReadySignal] = useState(0);
@@ -45,14 +45,16 @@ export function usePreviewMessaging({
       }
 
       if (event.data?.type === PREVIEW_COMPONENTS_REORDERED_TYPE) {
-        const { componentIds: nextComponentIds, selectedIndex } =
-          event.data.payload;
-        onComponentsReordered(nextComponentIds, selectedIndex);
+        onComponentsReordered(event.data.payload.instanceIds);
         return;
       }
 
       if (event.data?.type === PREVIEW_COMPONENT_SELECTED_TYPE) {
-        onComponentSelected(event.data.payload.index);
+        onComponentSelected({
+          instanceId: event.data.payload.instanceId,
+          componentType: event.data.payload.componentType,
+          index: event.data.payload.index
+        });
       }
     };
 
@@ -61,7 +63,7 @@ export function usePreviewMessaging({
     return () => {
       window.removeEventListener("message", handlePreviewMessage);
     };
-  }, [onComponentsReordered, onComponentSelected]);
+  }, [onComponentSelected, onComponentsReordered]);
 
   useEffect(() => {
     if (previewReadySignal === 0) {
@@ -76,19 +78,16 @@ export function usePreviewMessaging({
     const message: BuilderToPreviewMessage = {
       type: BUILDER_MESSAGE_TYPE,
       payload: {
-        componentIds: droppedComponentIds,
-        selectedInstanceIndex: selectedCanvasComponentId
-          ? selectedCanvasComponentIndex
-          : null
+        schema,
+        selectedInstanceId
       }
     };
 
     previewWindow.postMessage(message, window.location.origin);
   }, [
-    droppedComponentIds,
+    selectedInstanceId,
     previewReadySignal,
-    selectedCanvasComponentId,
-    selectedCanvasComponentIndex
+    schema
   ]);
 
   return {

@@ -1,8 +1,23 @@
+export interface ComponentSchema {
+  /**
+   * Unique identifier for the component instance.
+   */
+  id: string;
+  /**
+   * Component type, used to resolve the preview template.
+   */
+  type: string;
+  /**
+   * Optional props used by the preview template.
+   */
+  props?: Record<string, unknown>;
+}
+
 export type BuilderToPreviewMessage = {
   type: typeof BUILDER_MESSAGE_TYPE;
   payload: {
-    componentIds: string[];
-    selectedInstanceIndex?: number | null;
+    schema: ComponentSchema[];
+    selectedInstanceId?: string | null;
   };
 };
 
@@ -13,15 +28,15 @@ export type PreviewToBuilderMessage =
   | {
       type: typeof PREVIEW_COMPONENT_SELECTED_TYPE;
       payload: {
-        componentId: string;
+        instanceId: string;
         index: number;
+        componentType: string;
       };
     }
   | {
       type: typeof PREVIEW_COMPONENTS_REORDERED_TYPE;
       payload: {
-        componentIds: string[];
-        selectedIndex: number | null;
+        instanceIds: string[];
       };
     };
 

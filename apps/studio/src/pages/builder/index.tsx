@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { BuilderComponent } from "../../shared/builderComponents";
 import { builderComponents } from "../../shared/builderComponents";
+import type { ComponentSchema } from "../../shared/messaging";
 import { BuilderHeader } from "./components/BuilderHeader";
 import { CanvasArea } from "./components/CanvasArea";
 import { ComponentLibrary } from "./components/ComponentLibrary";
@@ -12,27 +13,34 @@ import { usePreviewMessaging } from "./hooks/usePreviewMessaging";
 export function BuilderPage() {
   const [selectedLibraryComponentId, setSelectedLibraryComponentId] =
     useState<string>(builderComponents[0]?.id ?? "");
-  const [selectedCanvasComponentIndex, setSelectedCanvasComponentIndex] =
-    useState<number | null>(null);
-  const [droppedComponentIds, setDroppedComponentIds] = useState<string[]>([]);
+  const [componentSchema, setComponentSchema] = useState<ComponentSchema[]>([]);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
+    null
+  );
+  const instanceCounterRef = useRef(0);
 
-  const selectedCanvasComponentId = useMemo(() => {
-    if (selectedCanvasComponentIndex === null) {
+  const selectedCanvasComponentIndex = useMemo(() => {
+    if (!selectedInstanceId) {
       return null;
     }
-    return droppedComponentIds[selectedCanvasComponentIndex] ?? null;
-  }, [droppedComponentIds, selectedCanvasComponentIndex]);
+    const nextIndex = componentSchema.findIndex(
+      (schema) => schema.id === selectedInstanceId
+    );
+    return nextIndex >= 0 ? nextIndex : null;
+  }, [componentSchema, selectedInstanceId]);
 
   const selectedComponent = useMemo<BuilderComponent | null>(() => {
-    if (!selectedCanvasComponentId) {
+    if (selectedCanvasComponentIndex === null) {
       return null;
     }
     return (
       builderComponents.find(
-        (component) => component.id === selectedCanvasComponentId
+        (component) =>
+          component.id ===
+          componentSchema[selectedCanvasComponentIndex]?.type
       ) ?? null
     );
-  }, [selectedCanvasComponentId]);
+  }, [componentSchema, selectedCanvasComponentIndex]);
 
   const { hoveredComponentId, handleMouseEnter, handleMouseLeave } =
     useComponentHover();
@@ -48,27 +56,69 @@ export function BuilderPage() {
     handleDragEnd
   } = useDragAndDrop();
 
+  const reorderSchemaByIds = (instanceIds: string[]) => {
+    setComponentSchema((prev) => {
+      if (instanceIds.length === 0) {
+        return prev;
+      }
+
+      const componentMap = new Map(prev.map((component) => [component.id, component]));
+      const reordered: ComponentSchema[] = [];
+
+      instanceIds.forEach((id) => {
+        const component = componentMap.get(id);
+        if (component) {
+          reordered.push(component);
+          componentMap.delete(id);
+        }
+      });
+
+      if (componentMap.size > 0) {
+        componentMap.forEach((component) => {
+          reordered.push(component);
+        });
+      }
+
+      const nextSchema = reordered;
+      const hasSelection =
+        selectedInstanceId !== null
+          ? nextSchema.some((component) => component.id === selectedInstanceId)
+          : true;
+
+      if (!hasSelection) {
+        const nextSelectedInstance = nextSchema[0] ?? null;
+        setSelectedInstanceId(nextSelectedInstance?.id ?? null);
+        if (nextSelectedInstance) {
+          setSelectedLibraryComponentId(nextSelectedInstance.type);
+        }
+      }
+
+      return nextSchema;
+    });
+  };
+
   const { iframeRef } = usePreviewMessaging({
-    droppedComponentIds,
-    selectedCanvasComponentId,
-    selectedCanvasComponentIndex,
-    onComponentsReordered: (componentIds, selectedIndex) => {
-      setDroppedComponentIds(componentIds);
-      setSelectedCanvasComponentIndex(
-        typeof selectedIndex === "number" ? selectedIndex : null
-      );
+    schema: componentSchema,
+    selectedInstanceId,
+    onComponentSelected: ({ instanceId, componentType }) => {
+      setSelectedInstanceId(instanceId);
+      setSelectedLibraryComponentId(componentType);
     },
-    onComponentSelected: (index) => {
-      setSelectedCanvasComponentIndex(index);
+    onComponentsReordered: (instanceIds) => {
+      reorderSchemaByIds(instanceIds);
     }
   });
 
   const handleComponentDrop = (componentId: string) => {
-    setDroppedComponentIds((prev) => {
-      const next = [...prev, componentId];
-      setSelectedCanvasComponentIndex(next.length - 1);
-      return next;
-    });
+    instanceCounterRef.current += 1;
+    const instanceId = `${componentId}-${instanceCounterRef.current}`;
+    const newComponent: ComponentSchema = {
+      id: instanceId,
+      type: componentId
+    };
+
+    setComponentSchema((prev) => [...prev, newComponent]);
+    setSelectedInstanceId(instanceId);
     setSelectedLibraryComponentId(componentId);
   };
 

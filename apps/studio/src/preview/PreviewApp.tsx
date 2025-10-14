@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { DragEvent, KeyboardEvent } from "react";
 import type {
   BuilderToPreviewMessage,
+  ComponentSchema,
   PreviewToBuilderMessage
 } from "../shared/messaging";
 import {
@@ -12,16 +13,9 @@ import {
 } from "../shared/messaging";
 import { previewTemplates } from "./templates";
 
-const reorderList = <T,>(list: T[], fromIndex: number, toIndex: number): T[] => {
-  const nextList = [...list];
-  const [moved] = nextList.splice(fromIndex, 1);
-  nextList.splice(toIndex, 0, moved);
-  return nextList;
-};
-
 export function PreviewApp() {
-  const [componentIds, setComponentIds] = useState<string[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [schema, setSchema] = useState<ComponentSchema[]>([]);
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
 
@@ -32,19 +26,16 @@ export function PreviewApp() {
       }
 
       if (event.data?.type === BUILDER_MESSAGE_TYPE) {
-        const { componentIds: incomingComponentIds, selectedInstanceIndex } =
-          event.data.payload;
-        setComponentIds(incomingComponentIds);
-
-        if (
-          typeof selectedInstanceIndex === "number" &&
-          selectedInstanceIndex >= 0 &&
-          selectedInstanceIndex < incomingComponentIds.length
-        ) {
-          setSelectedIndex(selectedInstanceIndex);
-        } else {
-          setSelectedIndex(null);
-        }
+        const {
+          schema: incomingSchema = [],
+          selectedInstanceId: incomingSelectedId = null
+        } = event.data.payload;
+        setSchema(incomingSchema);
+        setSelectedInstanceId(
+          typeof incomingSelectedId === "string" && incomingSelectedId.length > 0
+            ? incomingSelectedId
+            : null
+        );
       }
     };
 
@@ -58,47 +49,52 @@ export function PreviewApp() {
     };
   }, []);
 
-  const handleSelect = (componentId: string, index: number) => {
-    setSelectedIndex(index);
-    const message: PreviewToBuilderMessage = {
-      type: PREVIEW_COMPONENT_SELECTED_TYPE,
-      payload: {
-        componentId,
-        index
-      }
-    };
-    window.parent?.postMessage(message, window.location.origin);
-  };
-
-  const handleKeyDown = (
-    event: KeyboardEvent<HTMLDivElement>,
-    componentId: string,
-    index: number
-  ) => {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      handleSelect(componentId, index);
-    }
-  };
-
   const resetDragState = () => {
     setDraggingIndex(null);
     setDropIndex(null);
   };
 
+  const sendComponentSelected = useCallback((component: ComponentSchema, index: number) => {
+    setSelectedInstanceId(component.id);
+    const message: PreviewToBuilderMessage = {
+      type: PREVIEW_COMPONENT_SELECTED_TYPE,
+      payload: {
+        instanceId: component.id,
+        componentType: component.type,
+        index
+      }
+    };
+
+    window.parent?.postMessage(message, window.location.origin);
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>, component: ComponentSchema, index: number) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        sendComponentSelected(component, index);
+      }
+    },
+    [sendComponentSelected]
+  );
+
   const handleDragStart = (
     event: DragEvent<HTMLDivElement>,
-    componentId: string,
+    component: ComponentSchema,
     index: number
   ) => {
     event.dataTransfer.effectAllowed = "move";
-    event.dataTransfer.setData("text/plain", componentId);
+    event.dataTransfer.setData("text/plain", component.id);
     setDraggingIndex(index);
     setDropIndex(index);
-    handleSelect(componentId, index);
+    sendComponentSelected(component, index);
   };
 
   const handleDragOverComponent = (event: DragEvent<HTMLDivElement>, index: number) => {
+    if (draggingIndex === null) {
+      return;
+    }
+
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
 
@@ -114,6 +110,7 @@ export function PreviewApp() {
     if (draggingIndex === null) {
       return;
     }
+
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
 
@@ -122,13 +119,22 @@ export function PreviewApp() {
         event.currentTarget.querySelectorAll<HTMLDivElement>(".component-instance")
       );
       const pointerY = event.clientY;
-      const nextIndex = instances.findIndex((element) => {
-        const rect = element.getBoundingClientRect();
-        return pointerY < rect.top + rect.height / 2;
-      });
-      const derivedIndex = nextIndex === -1 ? componentIds.length : nextIndex;
-      if (dropIndex !== derivedIndex) {
-        setDropIndex(derivedIndex);
+
+      let nextIndex = schema.length;
+      for (let index = 0; index < instances.length; index += 1) {
+        const instance = instances[index];
+        if (!instance) {
+          continue;
+        }
+        const rect = instance.getBoundingClientRect();
+        if (pointerY < rect.top + rect.height / 2) {
+          nextIndex = index;
+          break;
+        }
+      }
+
+      if (dropIndex !== nextIndex) {
+        setDropIndex(nextIndex);
       }
     }
   };
@@ -137,16 +143,20 @@ export function PreviewApp() {
     if (draggingIndex === null) {
       return;
     }
+
     const relatedTarget = event.relatedTarget as Node | null;
-    if (!relatedTarget || !event.currentTarget.contains(relatedTarget)) {
-      setDropIndex(null);
+    if (relatedTarget && event.currentTarget.contains(relatedTarget)) {
+      return;
     }
+
+    setDropIndex(null);
   };
 
   const handleDropOnShell = (event: DragEvent<HTMLDivElement>) => {
     if (draggingIndex === null) {
       return;
     }
+
     event.preventDefault();
     event.stopPropagation();
 
@@ -155,12 +165,7 @@ export function PreviewApp() {
       return;
     }
 
-    if (
-      draggingIndex < 0 ||
-      draggingIndex >= componentIds.length ||
-      dropIndex < 0 ||
-      dropIndex > componentIds.length
-    ) {
+    if (dropIndex < 0 || dropIndex > schema.length) {
       resetDragState();
       return;
     }
@@ -171,24 +176,15 @@ export function PreviewApp() {
       return;
     }
 
-    const selectedComponentId =
-      selectedIndex !== null ? componentIds[selectedIndex] ?? null : null;
-
-    const nextComponentIds = reorderList(componentIds, draggingIndex, targetIndex);
-    const nextSelectedIndex =
-      selectedComponentId !== null ? nextComponentIds.indexOf(selectedComponentId) : null;
-
-    setComponentIds(nextComponentIds);
-    setSelectedIndex(
-      nextSelectedIndex !== null && nextSelectedIndex >= 0 ? nextSelectedIndex : null
-    );
+    const nextSchema = [...schema];
+    const [moved] = nextSchema.splice(draggingIndex, 1);
+    nextSchema.splice(targetIndex, 0, moved);
+    setSchema(nextSchema);
 
     const reorderMessage: PreviewToBuilderMessage = {
       type: PREVIEW_COMPONENTS_REORDERED_TYPE,
       payload: {
-        componentIds: nextComponentIds,
-        selectedIndex:
-          nextSelectedIndex !== null && nextSelectedIndex >= 0 ? nextSelectedIndex : null
+        instanceIds: nextSchema.map((component) => component.id)
       }
     };
     window.parent?.postMessage(reorderMessage, window.location.origin);
@@ -196,7 +192,7 @@ export function PreviewApp() {
     resetDragState();
   };
 
-  if (componentIds.length === 0) {
+  if (schema.length === 0) {
     return (
       <div className="preview-shell">
         <div className="empty-state">
@@ -214,36 +210,41 @@ export function PreviewApp() {
       onDragLeave={handleShellDragLeave}
       onDrop={handleDropOnShell}
     >
-      {componentIds.map((componentId, index) => {
-        const TemplateComponent = previewTemplates[componentId] ?? null;
+      {schema.map((component, index) => {
+        const TemplateComponent = previewTemplates[component.type] ?? null;
+
         if (!TemplateComponent) {
           return null;
         }
 
-        const isSelected = index === selectedIndex;
+        const isSelected = component.id === selectedInstanceId;
         const isDragging = index === draggingIndex;
         const showDropBefore = dropIndex === index;
         const showDropAfter = dropIndex === index + 1;
-        const instanceClassName = `component-instance${
-          isSelected ? " component-instance--selected" : ""
-        }${isDragging ? " component-instance--dragging" : ""}${
-          showDropBefore ? " component-instance--drop-before" : ""
-        }${showDropAfter ? " component-instance--drop-after" : ""}`;
+        const instanceClassName = [
+          "component-instance",
+          isSelected ? "component-instance--selected" : "",
+          isDragging ? "component-instance--dragging" : "",
+          showDropBefore ? "component-instance--drop-before" : "",
+          showDropAfter ? "component-instance--drop-after" : ""
+        ]
+          .filter(Boolean)
+          .join(" ");
 
         return (
           <div
-            key={`${componentId}-${index}`}
+            key={component.id}
             role="button"
             tabIndex={0}
             className={instanceClassName}
             draggable
-            onClick={() => handleSelect(componentId, index)}
-            onKeyDown={(event) => handleKeyDown(event, componentId, index)}
-            onDragStart={(event) => handleDragStart(event, componentId, index)}
+            onClick={() => sendComponentSelected(component, index)}
+            onKeyDown={(event) => handleKeyDown(event, component, index)}
+            onDragStart={(event) => handleDragStart(event, component, index)}
             onDragOver={(event) => handleDragOverComponent(event, index)}
             onDragEnd={resetDragState}
           >
-            <TemplateComponent />
+            <TemplateComponent schema={component} />
           </div>
         );
       })}
