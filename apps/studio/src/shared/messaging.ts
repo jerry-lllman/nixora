@@ -10,10 +10,10 @@ export interface ComponentSchema {
   /**
    * Optional props used by the preview template.
    */
-  props?: Record<string, unknown>;
+  props?: Record<string, any>;
 }
 
-export type BuilderToPreviewMessage = {
+export interface BuilderToPreviewMessage {
   type: typeof BUILDER_MESSAGE_TYPE;
   payload: {
     schema: ComponentSchema[];
