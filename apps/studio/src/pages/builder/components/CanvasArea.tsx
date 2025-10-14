@@ -24,7 +24,7 @@ export function CanvasArea({
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.15),transparent_55%)]"></div>
       <div className="relative flex flex-1 justify-center px-8 py-12">
         <div
-          className="relative w-full max-w-4xl"
+          className="relative w-full max-w-4xl border"
           onDragEnter={onDragEnter}
           onDragLeave={onDragLeave}
           onDragOver={onDragOver}
@@ -41,7 +41,7 @@ export function CanvasArea({
           <iframe
             ref={iframeRef}
             title="组件预览"
-            className="relative z-10 w-full overflow-hidden rounded-[32px] border-0 bg-transparent text-left shadow-[0_24px_80px_-50px_rgba(16,185,129,0.45)]"
+            className="relative z-10 w-full overflow-hidden border-0 bg-transparent text-left shadow-[0_24px_80px_-50px_rgba(16,185,129,0.45)]"
             src="/preview.html"
             style={{
               height: "100%",
