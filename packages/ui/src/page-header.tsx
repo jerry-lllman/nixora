@@ -13,7 +13,7 @@ export function PageHeader({ eyebrow, title, description, actions, className }: 
   return (
     <header className={clsx("space-y-4", className)}>
       {eyebrow ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-emerald-400">{eyebrow}</p>
+        <p className="text-xs font-semibold uppercase tracking-widest text-emerald-400">{eyebrow}</p>
       ) : null}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">

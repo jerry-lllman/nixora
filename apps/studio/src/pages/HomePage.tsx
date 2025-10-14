@@ -12,7 +12,7 @@ export function HomePage() {
               NX
             </span>
             <div>
-              <p className="text-xs font-medium uppercase tracking-[0.35em] text-emerald-600 dark:text-emerald-400">
+              <p className="text-xs font-medium uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 Studio
               </p>
               <p className="text-base font-semibold text-slate-900 dark:text-slate-100">
@@ -35,7 +35,7 @@ export function HomePage() {
         <div className="mt-16 grid flex-1 gap-16 md:grid-cols-[1.15fr_0.85fr] md:items-center">
           <section className="space-y-6">
             <div className="space-y-4">
-              <p className="text-sm uppercase tracking-[0.3em] text-emerald-600 dark:text-emerald-400">
+              <p className="text-sm uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 Meet your experience platform
               </p>
               <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
@@ -53,19 +53,19 @@ export function HomePage() {
             </div>
             <dl className="grid gap-6 sm:grid-cols-3">
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <dt className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   Teams onboarded
                 </dt>
                 <dd className="text-2xl font-semibold text-slate-900 dark:text-slate-50">120+</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <dt className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   Average launch time
                 </dt>
                 <dd className="text-2xl font-semibold text-slate-900 dark:text-slate-50">48 hrs</dd>
               </div>
               <div>
-                <dt className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                <dt className="text-xs uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   Projects delivered
                 </dt>
                 <dd className="text-2xl font-semibold text-slate-900 dark:text-slate-50">3.5k</dd>

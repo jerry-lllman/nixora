@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { BuilderPage } from "./pages/BuilderPage";
+import { BuilderPage } from "./pages/builder";
 import { HomePage } from "./pages/HomePage";
 
 function App() {
