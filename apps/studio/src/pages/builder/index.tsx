@@ -34,7 +34,8 @@ export function BuilderPage() {
     updateComponentConfig,
     selectComponent,
     getSelectedInstance,
-    getBuilderComponent
+    getBuilderComponent,
+    reorderComponents
   } = useCanvasState();
 
   const handleComponentDrop = (componentId: string) => {
@@ -80,6 +81,7 @@ export function BuilderPage() {
             handleDrop(event, handleComponentDrop);
           }}
           onComponentClick={selectComponent}
+          onReorder={reorderComponents}
         />
       </section>
       <SettingsPanel

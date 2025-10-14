@@ -112,6 +112,26 @@ export function useCanvasState() {
   }, []);
 
   /**
+   * 重新排序组件（用于拖拽）
+   */
+  const reorderComponents = useCallback((activeId: string, overId: string) => {
+    setCanvasComponents((prev) => {
+      const oldIndex = prev.findIndex((c) => c.instanceId === activeId);
+      const newIndex = prev.findIndex((c) => c.instanceId === overId);
+
+      if (oldIndex === -1 || newIndex === -1) return prev;
+
+      // 重新排列数组
+      const newOrder = [...prev];
+      const [movedItem] = newOrder.splice(oldIndex, 1);
+      newOrder.splice(newIndex, 0, movedItem);
+
+      // 更新 order 字段
+      return newOrder.map((item, idx) => ({ ...item, order: idx }));
+    });
+  }, []);
+
+  /**
    * 清空画布
    */
   const clearCanvas = useCallback(() => {
@@ -130,6 +150,7 @@ export function useCanvasState() {
     getSelectedInstance,
     getBuilderComponent,
     moveComponent,
+    reorderComponents,
     clearCanvas
   };
 }
