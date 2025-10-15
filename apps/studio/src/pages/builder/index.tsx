@@ -42,7 +42,7 @@ export function BuilderPage() {
 
   const selectedInstance = getSelectedInstance();
   const selectedBuilderComponent = selectedInstance
-    ? getBuilderComponent(selectedInstance.componentId)
+    ? getBuilderComponent(selectedInstance.componentType)
     : null;
 
   // 处理配置变更，自动绑定当前选中的实例ID
@@ -53,45 +53,47 @@ export function BuilderPage() {
   };
 
   return (
-    <main className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),transparent_55%)] dark:bg-slate-950 dark:text-slate-100">
-      <ComponentLibrary
-        selectedLibraryComponentId={selectedLibraryComponentId}
-        onComponentSelect={setSelectedLibraryComponentId}
-        onDragStart={(event, componentId) => {
-          handleDragStart(event, componentId);
-          setSelectedLibraryComponentId(componentId);
-        }}
-        onDragEnd={handleDragEnd}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      />
-      <section className="relative flex flex-1 min-h-0 flex-col">
-        <BuilderHeader />
-        <CanvasArea
-          canvasComponents={canvasComponents}
-          selectedInstanceId={selectedInstanceId}
-          isDraggingOverPreview={isDraggingOverPreview}
-          isDraggingComponent={isDraggingComponent}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDragOver={handleDragOver}
-          onDrop={(event) => {
-            handleDrop(event, handleComponentDrop);
+    <main className="flex flex-col h-screen overflow-hidden bg-slate-50 text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),transparent_55%)] dark:bg-slate-950 dark:text-slate-100">
+      <BuilderHeader />
+      <div className="flex flex-1 min-h-0">
+        <ComponentLibrary
+          selectedLibraryComponentId={selectedLibraryComponentId}
+          onComponentSelect={setSelectedLibraryComponentId}
+          onDragStart={(event, componentId) => {
+            handleDragStart(event, componentId);
+            setSelectedLibraryComponentId(componentId);
           }}
-          onComponentClick={selectComponent}
-          onReorder={reorderComponents}
+          onDragEnd={handleDragEnd}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         />
-      </section>
-      <SettingsPanel
-        selectedInstance={selectedInstance}
-        builderComponent={selectedBuilderComponent || null}
-        onConfigChange={handleConfigChange}
-        onDelete={() => {
-          if (selectedInstance) {
-            removeComponent(selectedInstance.instanceId);
-          }
-        }}
-      />
+        <section className="relative flex flex-1 min-h-0 flex-col">
+          <CanvasArea
+            canvasComponents={canvasComponents}
+            selectedInstanceId={selectedInstanceId}
+            isDraggingOverPreview={isDraggingOverPreview}
+            isDraggingComponent={isDraggingComponent}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={(event) => {
+              handleDrop(event, handleComponentDrop);
+            }}
+            onComponentClick={selectComponent}
+            onReorder={reorderComponents}
+          />
+        </section>
+        <SettingsPanel
+          selectedInstance={selectedInstance}
+          builderComponent={selectedBuilderComponent || null}
+          onConfigChange={handleConfigChange}
+          onDelete={() => {
+            if (selectedInstance) {
+              removeComponent(selectedInstance.instanceId);
+            }
+          }}
+        />
+      </div>
     </main>
   );
 }

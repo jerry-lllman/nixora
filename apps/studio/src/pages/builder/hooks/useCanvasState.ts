@@ -82,8 +82,8 @@ export function useCanvasState() {
   /**
    * 获取组件的 BuilderComponent 定义
    */
-  const getBuilderComponent = useCallback((componentId: string): BuilderComponent | undefined => {
-    return builderComponents.find((c) => c.componentType === componentId);
+  const getBuilderComponent = useCallback((componentType: string): BuilderComponent | undefined => {
+    return builderComponents.find((c) => c.componentType === componentType);
   }, []);
 
   /**
