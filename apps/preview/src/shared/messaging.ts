@@ -19,7 +19,7 @@ export interface BuilderToPreviewMessage {
     schema: ComponentSchema[];
     selectedInstanceId?: string | null;
   };
-};
+}
 
 export type PreviewToBuilderMessage =
   | {

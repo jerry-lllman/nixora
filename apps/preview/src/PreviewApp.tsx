@@ -1,334 +1,240 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { KeyboardEvent } from "react";
 import {
+  closestCenter,
   DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
   KeyboardSensor,
   PointerSensor,
-  closestCenter,
-  type DragEndEvent,
-  type DragOverEvent,
-  type DragStartEvent,
   useSensor,
   useSensors
 } from "@dnd-kit/core";
 import {
-  SortableContext,
   arrayMove,
+  SortableContext,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { previewTemplates } from "./templates";
+import { useEffect, useState } from "react";
+import { NixoraButton } from "@nixora/ui";
 import type {
   BuilderToPreviewMessage,
   ComponentSchema,
   PreviewToBuilderMessage
-} from "./types/messaging";
+} from "./shared/messaging";
 import {
   BUILDER_MESSAGE_TYPE,
   PREVIEW_COMPONENT_SELECTED_TYPE,
   PREVIEW_COMPONENTS_REORDERED_TYPE,
   PREVIEW_READY_TYPE
-} from "./types/messaging";
+} from "./shared/messaging";
 
-export function PreviewApp() {
-  const [schema, setSchema] = useState<ComponentSchema[]>([]);
+interface SortableItemProps {
+  component: ComponentSchema;
+  index: number;
+  isSelected: boolean;
+  onComponentClick: (
+    instanceId: string,
+    index: number,
+    componentType: string
+  ) => void;
+}
+
+function SortableItem({
+  component,
+  index,
+  isSelected,
+  onComponentClick
+}: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: component.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => onComponentClick(component.id, index, component.type)}
+      className={`bg-white border-2 rounded-lg cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow-md transition-all ${
+        isSelected
+          ? "border-blue-500 ring-2 ring-blue-500/20"
+          : "border-gray-300"
+      }`}
+    >
+      <NixoraButton {...component.props} />
+    </div>
+  );
+}
+
+function Item({ component }: { component: ComponentSchema }) {
+  return (
+    <div className="bg-white border-1 border-blue-500 rounded-lg  cursor-grabbing">
+      <NixoraButton {...component.props} />
+    </div>
+  );
+}
+
+export default function PreviewApp() {
+  // 接收来自 builder 的组件数据
+  const [components, setComponents] = useState<ComponentSchema[]>([]);
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
     null
   );
-  const [activeComponentId, setActiveComponentId] = useState<string | null>(
-    null
-  );
-  const [overComponentId, setOverComponentId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    useSensor(
-      PointerSensor,
-      // Slight movement threshold avoids accidental drags on click
-      { activationConstraint: { distance: 4 } }
-    ),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates
+    })
   );
 
+  // 发送消息到 builder
+  const sendMessageToBuilder = (message: PreviewToBuilderMessage) => {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(message, "*");
+    }
+  };
+
+  // 监听来自 builder 的消息
   useEffect(() => {
     const handleMessage = (event: MessageEvent<BuilderToPreviewMessage>) => {
-      // 不校验域名，根据事件类型来处理
       if (event.data?.type === BUILDER_MESSAGE_TYPE) {
-        const {
-          schema: incomingSchema = [],
-          selectedInstanceId: incomingSelectedId = null
-        } = event.data.payload;
-        setSchema(incomingSchema);
-        setSelectedInstanceId(
-          typeof incomingSelectedId === "string" &&
-            incomingSelectedId.length > 0
-            ? incomingSelectedId
-            : null
-        );
+        const { schema, selectedInstanceId } = event.data.payload;
+        setComponents(schema);
+        setSelectedInstanceId(selectedInstanceId ?? null);
       }
     };
 
     window.addEventListener("message", handleMessage);
 
-    const readyMessage: PreviewToBuilderMessage = { type: PREVIEW_READY_TYPE };
-    // 发送 ready 消息到 parent（允许任何域名）
-    window.parent?.postMessage(readyMessage, "*");
+    // 发送 ready 信号
+    sendMessageToBuilder({ type: PREVIEW_READY_TYPE });
 
     return () => {
       window.removeEventListener("message", handleMessage);
     };
   }, []);
 
-  const sendComponentsReordered = useCallback((nextSchema: ComponentSchema[]) => {
-    const reorderMessage: PreviewToBuilderMessage = {
-      type: PREVIEW_COMPONENTS_REORDERED_TYPE,
-      payload: {
-        instanceIds: nextSchema.map((component) => component.id)
-      }
-    };
-    // 发送到 parent（允许任何域名）
-    window.parent?.postMessage(reorderMessage, "*");
-  }, []);
-
-  const sendComponentSelected = useCallback(
-    (component: ComponentSchema, index: number) => {
-      setSelectedInstanceId(component.id);
-      const message: PreviewToBuilderMessage = {
-        type: PREVIEW_COMPONENT_SELECTED_TYPE,
-        payload: {
-          instanceId: component.id,
-          componentType: component.type,
-          index
-        }
-      };
-
-      // 发送到 parent（允许任何域名）
-      window.parent?.postMessage(message, "*");
-    },
-    []
-  );
-
-  const handleKeyDown = useCallback(
-    (
-      event: KeyboardEvent<HTMLDivElement>,
-      component: ComponentSchema,
-      index: number
-    ) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        sendComponentSelected(component, index);
-      }
-    },
-    [sendComponentSelected]
-  );
-
-  const resetDragMeta = useCallback(() => {
-    setActiveComponentId(null);
-    setOverComponentId(null);
-  }, []);
-
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      const activeId = String(event.active.id);
-      setActiveComponentId(activeId);
-      setOverComponentId(activeId);
-
-      const index = schema.findIndex((component) => component.id === activeId);
-      if (index === -1) {
-        return;
-      }
-
-      sendComponentSelected(schema[index], index);
-    },
-    [schema, sendComponentSelected]
-  );
-
-  const handleDragOver = useCallback((event: DragOverEvent) => {
-    const overId = event.over ? String(event.over.id) : null;
-    setOverComponentId(overId);
-  }, []);
-
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over) {
-        resetDragMeta();
-        return;
-      }
-
-      const activeId = String(active.id);
-      const overId = String(over.id);
-      if (activeId === overId) {
-        resetDragMeta();
-        return;
-      }
-
-      setSchema((previous) => {
-        const oldIndex = previous.findIndex(
-          (component) => component.id === activeId
-        );
-        const newIndex = previous.findIndex(
-          (component) => component.id === overId
-        );
-        if (
-          oldIndex === -1 ||
-          newIndex === -1 ||
-          oldIndex === newIndex
-        ) {
-          return previous;
-        }
-
-        const nextSchema = arrayMove(previous, oldIndex, newIndex);
-        sendComponentsReordered(nextSchema);
-        return nextSchema;
-      });
-      resetDragMeta();
-    },
-    [resetDragMeta, sendComponentsReordered]
-  );
-
-  const handleDragCancel = useCallback(() => {
-    resetDragMeta();
-  }, [resetDragMeta]);
-
-  const dropIndicatorById = useMemo(() => {
-    if (
-      !activeComponentId ||
-      !overComponentId ||
-      activeComponentId === overComponentId
-    ) {
-      return {};
-    }
-
-    const activeIndex = schema.findIndex(
-      (component) => component.id === activeComponentId
-    );
-    const overIndex = schema.findIndex(
-      (component) => component.id === overComponentId
-    );
-
-    if (activeIndex === -1 || overIndex === -1) {
-      return {};
-    }
-
-    const position =
-      activeIndex < overIndex ? "after" : activeIndex > overIndex ? "before" : null;
-
-    if (!position) {
-      return {};
-    }
-
-    const indicatorMap: Record<string, "before" | "after"> = {};
-    indicatorMap[overComponentId] = position;
-    return indicatorMap;
-  }, [activeComponentId, overComponentId, schema]);
-
-  const dropIndicatorPosition = useCallback(
-    (componentId: string) => dropIndicatorById[componentId] ?? null,
-    [dropIndicatorById]
-  );
-
-  if (schema.length === 0) {
-    return (
-      <div className="preview-shell">
-        <div className="empty-state">
-          拖拽组件到这里
-          <span>Drag components from the left panel</span>
-        </div>
-      </div>
-    );
-  }
-
-  const sortableIds = schema.map((component) => component.id);
-
-  return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      <SortableContext
-        items={sortableIds}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="preview-shell">
-          {schema.map((component, index) => (
-            <SortableComponentInstance
-              key={component.id}
-              component={component}
-              index={index}
-              isSelected={component.id === selectedInstanceId}
-              dropIndicatorPosition={dropIndicatorPosition(component.id)}
-              onSelect={sendComponentSelected}
-              onKeyDown={handleKeyDown}
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
-  );
-}
-
-type SortableComponentInstanceProps = {
-  component: ComponentSchema;
-  index: number;
-  isSelected: boolean;
-  dropIndicatorPosition: "before" | "after" | null;
-  onSelect: (component: ComponentSchema, index: number) => void;
-  onKeyDown: (
-    event: KeyboardEvent<HTMLDivElement>,
-    component: ComponentSchema,
-    index: number
-  ) => void;
-};
-
-function SortableComponentInstance({
-  component,
-  index,
-  isSelected,
-  dropIndicatorPosition,
-  onSelect,
-  onKeyDown
-}: SortableComponentInstanceProps) {
-  const TemplateComponent = previewTemplates[component.type] ?? null;
-
-  const { attributes, isDragging, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: component.id });
-
-  if (!TemplateComponent) {
-    return null;
-  }
-
-  const instanceClassName = [
-    "component-instance",
-    isSelected ? "component-instance--selected" : "",
-    isDragging ? "component-instance--dragging" : "",
-    dropIndicatorPosition === "before" ? "component-instance--drop-before" : "",
-    dropIndicatorPosition === "after" ? "component-instance--drop-after" : ""
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setComponents((components) => {
+        const oldIndex = components.findIndex((c) => c.id === active.id);
+        const newIndex = components.findIndex((c) => c.id === over.id);
+        const newComponents = arrayMove(components, oldIndex, newIndex);
+
+        // 通知 builder 组件顺序已改变
+        const instanceIds = newComponents.map((c) => c.id);
+        sendMessageToBuilder({
+          type: PREVIEW_COMPONENTS_REORDERED_TYPE,
+          payload: { instanceIds }
+        });
+
+        return newComponents;
+      });
+    }
+
+    setActiveId(null);
+  };
+
+  const handleDragCancel = () => {
+    setActiveId(null);
+  };
+
+  const handleComponentClick = (
+    instanceId: string,
+    index: number,
+    componentType: string
+  ) => {
+    setSelectedInstanceId(instanceId);
+    sendMessageToBuilder({
+      type: PREVIEW_COMPONENT_SELECTED_TYPE,
+      payload: { instanceId, index, componentType }
+    });
+  };
+
+  // 获取当前拖拽的组件
+  const activeComponent = activeId
+    ? components.find((c) => c.id === activeId)
+    : null;
+
   return (
-    <div
-      ref={setNodeRef}
-      className={instanceClassName}
-      style={style}
-      onClick={() => onSelect(component, index)}
-      onKeyDown={(event) => onKeyDown(event, component, index)}
-      {...attributes}
-      {...listeners}
-    >
-      <TemplateComponent schema={component} />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+      <div className="max-w-3xl mx-auto">
+        {components.length === 0 ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="text-gray-400 mb-4">
+                <svg
+                  className="w-16 h-16 mx-auto"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                等待组件数据
+              </h2>
+              <p className="text-gray-500">从左侧拖拽组件到画布中开始构建</p>
+            </div>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragCancel={handleDragCancel}
+          >
+            <SortableContext
+              items={components.map((c) => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {components.map((component, index) => (
+                <SortableItem
+                  key={component.id}
+                  component={component}
+                  index={index}
+                  isSelected={component.id === selectedInstanceId}
+                  onComponentClick={handleComponentClick}
+                />
+              ))}
+            </SortableContext>
+
+            <DragOverlay>
+              {activeComponent ? <Item component={activeComponent} /> : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+      </div>
     </div>
   );
 }

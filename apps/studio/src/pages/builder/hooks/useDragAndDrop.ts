@@ -7,9 +7,9 @@ export function useDragAndDrop() {
 
   const handleDragStart = (
     event: DragEvent<HTMLButtonElement>,
-    componentId: string
+    componentType: string
   ) => {
-    event.dataTransfer.setData("application/builder-component", componentId);
+    event.dataTransfer.setData("application/builder-component", componentType);
     event.dataTransfer.effectAllowed = "copy";
     setIsDraggingComponent(true);
   };
@@ -21,18 +21,18 @@ export function useDragAndDrop() {
 
   const handleDrop = (
     event: DragEvent<HTMLDivElement>,
-    onDrop: (componentId: string) => void
+    onDrop: (componentType: string) => void
   ) => {
     event.preventDefault();
     setIsDraggingOverPreview(false);
     setIsDraggingComponent(false);
-    const componentId = event.dataTransfer.getData(
+    const componentType = event.dataTransfer.getData(
       "application/builder-component"
     );
-    if (!componentId) {
+    if (!componentType) {
       return;
     }
-    onDrop(componentId);
+    onDrop(componentType);
   };
 
   const handleDragEnter = (event: DragEvent<HTMLDivElement>) => {

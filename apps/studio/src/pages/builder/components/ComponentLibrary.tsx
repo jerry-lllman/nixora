@@ -4,9 +4,11 @@ import { builderComponents } from "../../../shared/builderComponents";
 
 interface ComponentLibraryProps {
   selectedLibraryComponentId: string;
-  hoveredComponentId: string | null;
   onComponentSelect: (componentId: string) => void;
-  onDragStart: (event: DragEvent<HTMLButtonElement>, componentId: string) => void;
+  onDragStart: (
+    event: DragEvent<HTMLButtonElement>,
+    componentId: string
+  ) => void;
   onDragEnd: () => void;
   onMouseEnter: (componentId: string) => void;
   onMouseLeave: () => void;
@@ -14,7 +16,6 @@ interface ComponentLibraryProps {
 
 export function ComponentLibrary({
   selectedLibraryComponentId,
-  hoveredComponentId,
   onComponentSelect,
   onDragStart,
   onDragEnd,
@@ -58,19 +59,22 @@ export function ComponentLibrary({
           </div>
           <div className="mt-5 grid grid-cols-3 gap-3">
             {builderComponents.map((component) => {
-              const isActive = component.id === selectedLibraryComponentId;
+              const isActive =
+                component.componentType === selectedLibraryComponentId;
               return (
                 <button
-                  key={component.id}
+                  key={component.componentType}
                   onClick={() => {
-                    onComponentSelect(component.id);
+                    onComponentSelect(component.componentType);
                   }}
                   onMouseEnter={() => {
-                    onMouseEnter(component.id);
+                    onMouseEnter(component.componentType);
                   }}
                   onMouseLeave={onMouseLeave}
                   draggable
-                  onDragStart={(event) => onDragStart(event, component.id)}
+                  onDragStart={(event) => {
+                    onDragStart(event, component.componentType);
+                  }}
                   onDragEnd={onDragEnd}
                   className={`group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border px-4 py-5 text-center transition ${
                     isActive
@@ -90,11 +94,6 @@ export function ComponentLibrary({
                   <p className="text-xs font-semibold text-slate-700 transition-colors dark:text-slate-200">
                     {component.name}
                   </p>
-                  {hoveredComponentId === component.id ? (
-                    <div className="pointer-events-none absolute inset-x-2 top-full z-10 -mt-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs leading-relaxed text-slate-600 shadow-[0_12px_30px_-20px_rgba(16,185,129,0.3)] dark:border-emerald-400/40 dark:bg-slate-900/95 dark:text-slate-200 dark:shadow-[0_12px_30px_-20px_rgba(16,185,129,0.8)]">
-                      {component.description}
-                    </div>
-                  ) : null}
                 </button>
               );
             })}

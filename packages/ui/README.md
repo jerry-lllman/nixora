@@ -28,11 +28,13 @@ src/
 ## 组件分层
 
 ### 基础层 (shadcn/ui)
-- **Button** - 按钮组件，支持多种变体（default, destructive, outline, secondary, ghost, link）
+
+- **NixoraButton** - 按钮组件，支持多种变体（default, destructive, outline, secondary, ghost, link）
 - **Input** - 输入框组件
 - **Card** - 卡片容器组件及其子组件（CardHeader, CardTitle, CardDescription, CardContent, CardFooter）
 
 ### 业务层 (Marketing)
+
 - **Hero** - 首屏大标题区域
 - **CTA** - 行动号召区域
 - **PageHeader** - 页面头部
@@ -45,12 +47,12 @@ src/
 ### 基础组件
 
 ```tsx
-import { Button, Input, Card, CardHeader, CardTitle, CardContent } from "@nixora/ui";
+import { NixoraButton, Input, Card, CardHeader, CardTitle, CardContent } from "@nixora/ui";
 
-// Button 示例
-<Button variant="default" size="lg">
+// NixoraButton 示例
+<NixoraButton variant="default" size="lg">
   点击我
-</Button>
+</NixoraButton>
 
 // Card 示例
 <Card>
@@ -150,16 +152,16 @@ pnpm run lint
 
 从旧版本迁移时的主要变更：
 
-1. **Button** 组件：
-   - 旧：`<Button variant="primary">`
-   - 新：`<Button variant="default">` 或自定义样式
+1. **NixoraButton** 组件：
+   - 旧：`<NixoraButton variant="primary">`
+   - 新：`<NixoraButton variant="default">` 或自定义样式
 
 2. **导入路径统一**：
    - 所有组件从 `@nixora/ui` 导入
    - 无需区分 `marketing-*` 前缀
 
 3. **移除的组件**：
-   - `MarketingButton` - 使用 `Button` 替代
+   - `MarketingButton` - 使用 `NixoraButton` 替代
    - `MarketingInput` - 使用 `Input` 替代
    - `MarketingText` - 使用原生 HTML 标签 + Tailwind
    - `MarketingImage` - 使用原生 `<img>` + Tailwind

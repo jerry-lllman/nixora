@@ -17,7 +17,8 @@ export interface ConfigPanelProps {
  * Builder 组件定义
  */
 export interface BuilderComponent {
-  id: string;
+  componentId?: string;
+  componentType: string;
   name: string;
   description: string;
   category: ComponentCategory;
@@ -32,24 +33,24 @@ export interface BuilderComponent {
  */
 export interface CanvasComponentInstance {
   instanceId: string;             // 实例唯一 ID
-  componentId: string;            // 对应的 BuilderComponent.id
+  componentType: string;            // 对应的 BuilderComponent.componentType
   props: Record<string, any>;    // 当前配置值
   order: number;                  // 排序
 }
 
-import { Button } from "@nixora/ui";
-import { ButtonConfig } from "../pages/builder/components/settings/ButtonConfig";
+import { NixoraButton } from "@nixora/ui";
+import { NixoraButtonConfig } from "../pages/builder/components/settings/ButtonConfig";
 
 export const builderComponents: BuilderComponent[] = [
   // ===== 基础组件 =====
-  {
-    id: "marketing-button",
+  { 
+    componentType: 'NixoraButton',
     name: "营销按钮",
     description: "可配置样式、大小和图标的按钮组件",
     category: "basic",
     icon: "🔘",
-    component: Button,
-    ConfigPanel: ButtonConfig,
+    component: NixoraButton,
+    ConfigPanel: NixoraButtonConfig,
     props: {
       text: "立即购买",
       variant: "primary",

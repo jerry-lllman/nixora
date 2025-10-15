@@ -4,40 +4,43 @@
 
 ## 主要变更
 
-### 1. Button 组件
+### 1. NixoraButton 组件
 
 **旧版本有两个按钮组件：**
-- `Button` (button.tsx)
+
+- `NixoraButton` (button.tsx)
 - `MarketingButton` (marketing-button.tsx)
 
 **新版本统一为：**
+
 ```tsx
-import { Button } from "@nixora/ui";
+import { NixoraButton } from "@nixora/ui";
 
-// 旧：<Button variant="primary">
-// 新：<Button variant="default"> 或 <Button>
+// 旧：<NixoraButton variant="primary">
+// 新：<NixoraButton variant="default"> 或 <NixoraButton>
 
-// 旧：<Button variant="ghost">
-// 新：<Button variant="ghost"> (保持不变)
+// 旧：<NixoraButton variant="ghost">
+// 新：<NixoraButton variant="ghost"> (保持不变)
 
-// 旧：<Button variant="outline">
-// 新：<Button variant="outline"> (保持不变)
+// 旧：<NixoraButton variant="outline">
+// 新：<NixoraButton variant="outline"> (保持不变)
 
 // 新增变体：
-<Button variant="secondary">次要按钮</Button>
-<Button variant="destructive">危险按钮</Button>
-<Button variant="link">链接按钮</Button>
+<NixoraButton variant="secondary">次要按钮</NixoraButton>
+<NixoraButton variant="destructive">危险按钮</NixoraButton>
+<NixoraButton variant="link">链接按钮</NixoraButton>
 
 // 尺寸选项：
-<Button size="sm">小按钮</Button>
-<Button size="default">默认</Button>
-<Button size="lg">大按钮</Button>
-<Button size="icon">图标按钮</Button>
+<NixoraButton size="sm">小按钮</NixoraButton>
+<NixoraButton size="default">默认</NixoraButton>
+<NixoraButton size="lg">大按钮</NixoraButton>
+<NixoraButton size="icon">图标按钮</NixoraButton>
 ```
 
 ### 2. Input 组件
 
 **旧：MarketingInput**
+
 ```tsx
 <MarketingInput
   label="邮箱"
@@ -50,6 +53,7 @@ import { Button } from "@nixora/ui";
 ```
 
 **新：使用 Input + 自定义布局**
+
 ```tsx
 import { Input } from "@nixora/ui";
 
@@ -57,17 +61,19 @@ import { Input } from "@nixora/ui";
   <label className="text-sm font-medium">邮箱</label>
   <Input type="email" placeholder="请输入邮箱" />
   <p className="text-xs text-muted-foreground">我们不会分享您的邮箱</p>
-</div>
+</div>;
 ```
 
 ### 3. 文本组件
 
 **旧：MarketingText**
+
 ```tsx
 <MarketingText text="标题" variant="h1" align="center" />
 ```
 
 **新：使用原生 HTML + Tailwind**
+
 ```tsx
 <h1 className="text-4xl md:text-5xl font-bold text-center">标题</h1>
 ```
@@ -75,23 +81,16 @@ import { Input } from "@nixora/ui";
 ### 4. 图片组件
 
 **旧：MarketingImage**
+
 ```tsx
-<MarketingImage
-  src="/image.jpg"
-  alt="描述"
-  fit="cover"
-  rounded
-/>
+<MarketingImage src="/image.jpg" alt="描述" fit="cover" rounded />
 ```
 
 **新：使用原生 img + Tailwind**
+
 ```tsx
 <div className="overflow-hidden rounded-lg">
-  <img
-    src="/image.jpg"
-    alt="描述"
-    className="w-full h-full object-cover"
-  />
+  <img src="/image.jpg" alt="描述" className="w-full h-full object-cover" />
 </div>
 ```
 
@@ -101,6 +100,7 @@ import { Input } from "@nixora/ui";
 
 **建议：**
 使用专业的轮播库，如：
+
 - [Embla Carousel](https://www.embla-carousel.com/) - 轻量级，可定制
 - [Swiper](https://swiperjs.com/) - 功能丰富
 - shadcn/ui 的 Carousel 组件（基于 Embla）
@@ -110,6 +110,7 @@ import { Input } from "@nixora/ui";
 以下组件 API 基本保持不变，但内部使用了 shadcn/ui 的基础组件：
 
 #### Hero
+
 ```tsx
 <Hero
   eyebrow="新品上线"
@@ -121,6 +122,7 @@ import { Input } from "@nixora/ui";
 ```
 
 #### FeatureGrid
+
 ```tsx
 <FeatureGrid
   sectionTitle="核心功能"
@@ -131,6 +133,7 @@ import { Input } from "@nixora/ui";
 ```
 
 #### CouponCard
+
 ```tsx
 <CouponCard
   title="新人专享"
@@ -162,8 +165,8 @@ import { Input } from "@nixora/ui";
 ```ts
 content: [
   "./src/**/*.{ts,tsx}",
-  "../../packages/ui/src/**/*.{ts,tsx}", // 重要！
-]
+  "../../packages/ui/src/**/*.{ts,tsx}" // 重要！
+];
 ```
 
 ## 新增功能
@@ -173,20 +176,23 @@ content: [
 新增的卡片组件，用于构建结构化内容：
 
 ```tsx
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@nixora/ui";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from "@nixora/ui";
 
 <Card>
   <CardHeader>
     <CardTitle>标题</CardTitle>
     <CardDescription>描述</CardDescription>
   </CardHeader>
-  <CardContent>
-    内容区域
-  </CardContent>
-  <CardFooter>
-    底部操作区
-  </CardFooter>
-</Card>
+  <CardContent>内容区域</CardContent>
+  <CardFooter>底部操作区</CardFooter>
+</Card>;
 ```
 
 ### 2. cn 工具函数
@@ -198,12 +204,13 @@ import { cn } from "@nixora/ui";
 
 <div className={cn("base-class", isActive && "active-class", className)}>
   内容
-</div>
+</div>;
 ```
 
 ## 迁移步骤
 
 ### 步骤 1: 更新依赖
+
 ```bash
 cd packages/ui
 pnpm install
@@ -212,6 +219,7 @@ pnpm install
 ### 步骤 2: 查找并替换
 
 使用以下命令查找需要迁移的组件：
+
 ```bash
 # 查找 MarketingButton
 grep -r "MarketingButton" apps/
@@ -226,7 +234,8 @@ grep -r "Carousel" apps/
 ### 步骤 3: 逐个迁移
 
 建议按以下顺序迁移：
-1. Button 组件（最常用）
+
+1. NixoraButton 组件（最常用）
 2. Input 组件
 3. 文本和图片组件（简单替换）
 4. Carousel（需要引入新库）
@@ -243,19 +252,24 @@ pnpm run dev
 ## 常见问题
 
 ### Q: 为什么要移除 Carousel？
+
 A: 轮播是复杂组件，维护成本高。使用成熟的库可以获得更好的性能、可访问性和功能。
 
 ### Q: 我的自定义样式会受影响吗？
+
 A: 不会。所有组件都支持 `className` prop，可以覆盖默认样式。
 
-### Q: Button 的 variant="primary" 去哪了？
+### Q: NixoraButton 的 variant="primary" 去哪了？
+
 A: 使用 `variant="default"` 或不指定 variant（默认就是 default）。
 
 ### Q: 如何自定义主题色？
+
 A: 修改 CSS 变量或 Tailwind 配置中的颜色值。
 
 ## 获取帮助
 
 如有问题，请查看：
+
 - [README.md](./README.md) - 组件使用文档
 - [shadcn/ui 文档](https://ui.shadcn.com) - 基础组件文档

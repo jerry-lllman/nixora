@@ -8,7 +8,7 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default:
+        primary:
           "bg-primary text-primary-foreground shadow border-primary hover:bg-primary/90 hover:border-primary/90",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm border-destructive hover:bg-destructive/90 hover:border-destructive/90",
@@ -21,15 +21,15 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 border-transparent hover:underline"
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
+        small: "h-8 rounded-md px-3 text-xs",
+        medium: "h-9 px-4 py-2",
+        large: "h-10 rounded-md px-8",
         icon: "h-9 w-9"
       }
     },
     defaultVariants: {
-      variant: "default",
-      size: "default"
+      variant: "primary",
+      size: "medium"
     }
   }
 );
@@ -38,20 +38,36 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean;
+  text?: string;
+  fullWidth?: boolean;
+  icon?: string | React.ReactNode;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+const NixoraButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, asChild = false, fullWidth, icon, text, children, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(
+          buttonVariants({ variant, size }),
+          fullWidth && "w-full",
+          className
+        )}
         ref={ref}
         {...props}
-      />
+      >
+        {icon && (
+          typeof icon === "string" ? (
+            <span className="button-icon">{icon}</span>
+          ) : (
+            icon
+          )
+        )}
+        {text || children}
+      </Comp>
     );
   }
 );
-Button.displayName = "Button";
+NixoraButton.displayName = "NixoraButton";
 
-export { Button, buttonVariants };
+export { NixoraButton, buttonVariants };

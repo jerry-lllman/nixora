@@ -4,12 +4,7 @@ import type { ComponentSchema } from "../../../shared/messaging";
 import { usePreviewMessaging } from "../hooks/usePreviewMessaging";
 
 interface CanvasAreaProps {
-  canvasComponents: Array<{
-    instanceId: string;
-    componentId: string;
-    props: Record<string, any>;
-    order: number;
-  }>;
+  canvasComponents: [];
   selectedInstanceId: string | null;
   isDraggingOverPreview: boolean;
   isDraggingComponent?: boolean;
@@ -37,7 +32,7 @@ export function CanvasArea({
   const schema: ComponentSchema[] = useMemo(() => {
     return canvasComponents.map((instance) => ({
       id: instance.instanceId,
-      type: instance.componentId,
+      type: instance.componentType,
       props: instance.props
     }));
   }, [canvasComponents]);

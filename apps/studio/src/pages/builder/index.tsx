@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { builderComponents } from "../../shared/builderComponents";
 import { BuilderHeader } from "./components/BuilderHeader";
 import { CanvasArea } from "./components/CanvasArea";
 import { ComponentLibrary } from "./components/ComponentLibrary";
@@ -10,10 +9,9 @@ import { useDragAndDrop } from "./hooks/useDragAndDrop";
 
 export function BuilderPage() {
   const [selectedLibraryComponentId, setSelectedLibraryComponentId] =
-    useState<string>(builderComponents[0]?.id ?? "");
+    useState("");
 
-  const { hoveredComponentId, handleMouseEnter, handleMouseLeave } =
-    useComponentHover();
+  const { handleMouseEnter, handleMouseLeave } = useComponentHover();
 
   const {
     isDraggingOverPreview,
@@ -38,8 +36,8 @@ export function BuilderPage() {
     reorderComponents
   } = useCanvasState();
 
-  const handleComponentDrop = (componentId: string) => {
-    addComponent(componentId);
+  const handleComponentDrop = (componentType: string) => {
+    addComponent(componentType);
   };
 
   const selectedInstance = getSelectedInstance();
@@ -58,7 +56,6 @@ export function BuilderPage() {
     <main className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.12),transparent_55%)] dark:bg-slate-950 dark:text-slate-100">
       <ComponentLibrary
         selectedLibraryComponentId={selectedLibraryComponentId}
-        hoveredComponentId={hoveredComponentId}
         onComponentSelect={setSelectedLibraryComponentId}
         onDragStart={(event, componentId) => {
           handleDragStart(event, componentId);

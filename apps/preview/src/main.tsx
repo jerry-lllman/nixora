@@ -1,8 +1,7 @@
-import React from "react";
 import ReactDOM from "react-dom/client";
-import { PreviewApp } from "./PreviewApp";
+import React from "react";
+import PreviewApp from "./PreviewApp.tsx";
 import "@nixora/ui/styles.css";
-import "./styles.css";
 
 const rootElement = document.getElementById("preview-root");
 

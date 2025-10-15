@@ -12,14 +12,14 @@ export function useCanvasState() {
   /**
    * 添加组件到画布
    */
-  const addComponent = useCallback((componentId: string) => {
-    const builderComponent = builderComponents.find((c) => c.id === componentId);
+  const addComponent = useCallback((componentType: string) => {
+    const builderComponent = builderComponents.find((c) => c.componentType === componentType);
     if (!builderComponent) return;
 
     // 使用组件定义的默认配置
     const newInstance: CanvasComponentInstance = {
-      instanceId: `${componentId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      componentId,
+      instanceId: `${componentType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      componentType,
       props: { ...builderComponent.props }, // 克隆默认配置
       order: canvasComponents.length
     };
@@ -83,7 +83,7 @@ export function useCanvasState() {
    * 获取组件的 BuilderComponent 定义
    */
   const getBuilderComponent = useCallback((componentId: string): BuilderComponent | undefined => {
-    return builderComponents.find((c) => c.id === componentId);
+    return builderComponents.find((c) => c.componentType === componentId);
   }, []);
 
   /**
