@@ -5,5 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173
+  },
+  define: {
+    'API_BASE_URL': JSON.stringify(process.env.VITE_API_URL ?? "http://localhost:3333")
   }
 });

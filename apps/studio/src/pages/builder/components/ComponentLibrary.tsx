@@ -1,5 +1,4 @@
-import type { DragEvent } from "react";
-import type { BuilderComponent } from "../../../shared/builderComponents";
+import { useState, type DragEvent } from "react";
 import { builderComponents } from "../../../shared/builderComponents";
 
 interface ComponentLibraryProps {
@@ -22,6 +21,18 @@ export function ComponentLibrary({
   onMouseEnter,
   onMouseLeave
 }: ComponentLibraryProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 根据搜索词过滤组件
+  const filteredComponents = builderComponents.filter((component) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      component.name.toLowerCase().includes(query) ||
+      component.componentType.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <aside className="hidden min-h-0 w-80 flex-none overflow-y-auto border-r border-slate-200 bg-white/80 p-7 text-slate-700 backdrop-blur lg:block dark:border-white/5 dark:bg-slate-950/70 dark:text-slate-300">
       <div className="space-y-6">
@@ -54,49 +65,61 @@ export function ComponentLibrary({
             <input
               type="search"
               placeholder="输入组件名称..."
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+              }}
               className="w-full rounded-xl border border-slate-200 bg-white/70 py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-white/5 dark:bg-slate-950/80 dark:text-slate-200 dark:placeholder:text-slate-600"
             />
           </div>
           <div className="mt-5 grid grid-cols-3 gap-3">
-            {builderComponents.map((component) => {
-              const isActive =
-                component.componentType === selectedLibraryComponentId;
-              return (
-                <button
-                  key={component.componentType}
-                  onClick={() => {
-                    onComponentSelect(component.componentType);
-                  }}
-                  onMouseEnter={() => {
-                    onMouseEnter(component.componentType);
-                  }}
-                  onMouseLeave={onMouseLeave}
-                  draggable
-                  onDragStart={(event) => {
-                    onDragStart(event, component.componentType);
-                  }}
-                  onDragEnd={onDragEnd}
-                  className={`group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border px-4 py-5 text-center transition ${
-                    isActive
-                      ? "border-emerald-400/70 bg-gradient-to-b from-emerald-100 via-emerald-50 to-transparent shadow-[0_20px_50px_-30px_rgba(16,185,129,0.45)] dark:from-emerald-500/10 dark:via-emerald-500/5 dark:to-transparent dark:shadow-[0_20px_50px_-30px_rgba(16,185,129,0.9)]"
-                      : "border-slate-200 bg-white/80 hover:border-emerald-400/50 hover:bg-emerald-50/40 dark:border-white/5 dark:bg-slate-900/50 dark:hover:border-emerald-400/50 dark:hover:bg-slate-900/70"
-                  }`}
-                >
-                  <span
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl transition ${
+            {filteredComponents.length > 0 ? (
+              filteredComponents.map((component) => {
+                const isActive =
+                  component.componentType === selectedLibraryComponentId;
+                return (
+                  <button
+                    key={component.componentType}
+                    onClick={() => {
+                      onComponentSelect(component.componentType);
+                    }}
+                    onMouseEnter={() => {
+                      onMouseEnter(component.componentType);
+                    }}
+                    onMouseLeave={onMouseLeave}
+                    draggable
+                    onDragStart={(event) => {
+                      onDragStart(event, component.componentType);
+                    }}
+                    onDragEnd={onDragEnd}
+                    className={`group relative flex flex-col items-center gap-2 overflow-hidden rounded-xl border px-4 py-5 text-center transition ${
                       isActive
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
-                        : "bg-slate-100 text-slate-600 group-hover:bg-emerald-50 group-hover:text-emerald-600 dark:bg-slate-800/80 dark:text-slate-300 dark:group-hover:text-emerald-200"
+                        ? "border-emerald-400/70 bg-gradient-to-b from-emerald-100 via-emerald-50 to-transparent shadow-[0_20px_50px_-30px_rgba(16,185,129,0.45)] dark:from-emerald-500/10 dark:via-emerald-500/5 dark:to-transparent dark:shadow-[0_20px_50px_-30px_rgba(16,185,129,0.9)]"
+                        : "border-slate-200 bg-white/80 hover:border-emerald-400/50 hover:bg-emerald-50/40 dark:border-white/5 dark:bg-slate-900/50 dark:hover:border-emerald-400/50 dark:hover:bg-slate-900/70"
                     }`}
                   >
-                    {component.icon}
-                  </span>
-                  <p className="text-xs font-semibold text-slate-700 transition-colors dark:text-slate-200">
-                    {component.name}
-                  </p>
-                </button>
-              );
-            })}
+                    <span
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl transition ${
+                        isActive
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                          : "bg-slate-100 text-slate-600 group-hover:bg-emerald-50 group-hover:text-emerald-600 dark:bg-slate-800/80 dark:text-slate-300 dark:group-hover:text-emerald-200"
+                      }`}
+                    >
+                      {component.icon}
+                    </span>
+                    <p className="text-xs font-semibold text-slate-700 transition-colors dark:text-slate-200">
+                      {component.name}
+                    </p>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="col-span-3 py-8 text-center">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  未找到匹配的组件
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

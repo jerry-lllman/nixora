@@ -28,8 +28,12 @@ export function HomePage() {
             >
               进入页面搭建器
             </Link>
-            <NixoraButton variant="ghost">Log in</NixoraButton>
-            <NixoraButton>Create workspace</NixoraButton>
+            <Link to="/login">
+              <NixoraButton variant="ghost">登录</NixoraButton>
+            </Link>
+            <Link to="/register">
+              <NixoraButton>注册</NixoraButton>
+            </Link>
           </div>
         </header>
         <div className="mt-16 grid flex-1 gap-16 md:grid-cols-[1.15fr_0.85fr] md:items-center">
@@ -49,12 +53,14 @@ export function HomePage() {
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <NixoraButton className="flex-1 sm:flex-none">
-                Create workspace
-              </NixoraButton>
-              <NixoraButton variant="outline" className="flex-1 sm:flex-none">
-                Log in to existing workspace
-              </NixoraButton>
+              <Link to="/register" className="flex-1 sm:flex-none">
+                <NixoraButton className="w-full">注册账号</NixoraButton>
+              </Link>
+              <Link to="/login" className="flex-1 sm:flex-none">
+                <NixoraButton variant="outline" className="w-full">
+                  登录已有账号
+                </NixoraButton>
+              </Link>
             </div>
             <dl className="grid gap-6 sm:grid-cols-3">
               <div>
@@ -158,8 +164,10 @@ export function HomePage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <NixoraButton>Create workspace</NixoraButton>
-            <NixoraButton variant="ghost">Contact sales</NixoraButton>
+            <Link to="/register">
+              <NixoraButton>注册账号</NixoraButton>
+            </Link>
+            <NixoraButton variant="ghost">联系销售</NixoraButton>
           </div>
         </footer>
       </div>
