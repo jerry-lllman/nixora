@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { KeyboardEvent } from "react";
 import {
   DndContext,
@@ -6,6 +6,7 @@ import {
   PointerSensor,
   closestCenter,
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
   useSensor,
   useSensors
@@ -36,6 +37,10 @@ export function PreviewApp() {
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
     null
   );
+  const [activeComponentId, setActiveComponentId] = useState<string | null>(
+    null
+  );
+  const [overComponentId, setOverComponentId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(
@@ -118,9 +123,17 @@ export function PreviewApp() {
     [sendComponentSelected]
   );
 
+  const resetDragMeta = useCallback(() => {
+    setActiveComponentId(null);
+    setOverComponentId(null);
+  }, []);
+
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       const activeId = String(event.active.id);
+      setActiveComponentId(activeId);
+      setOverComponentId(activeId);
+
       const index = schema.findIndex((component) => component.id === activeId);
       if (index === -1) {
         return;
@@ -131,16 +144,23 @@ export function PreviewApp() {
     [schema, sendComponentSelected]
   );
 
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const overId = event.over ? String(event.over.id) : null;
+    setOverComponentId(overId);
+  }, []);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
       if (!over) {
+        resetDragMeta();
         return;
       }
 
       const activeId = String(active.id);
       const overId = String(over.id);
       if (activeId === overId) {
+        resetDragMeta();
         return;
       }
 
@@ -163,8 +183,50 @@ export function PreviewApp() {
         sendComponentsReordered(nextSchema);
         return nextSchema;
       });
+      resetDragMeta();
     },
-    [sendComponentsReordered]
+    [resetDragMeta, sendComponentsReordered]
+  );
+
+  const handleDragCancel = useCallback(() => {
+    resetDragMeta();
+  }, [resetDragMeta]);
+
+  const dropIndicatorById = useMemo(() => {
+    if (
+      !activeComponentId ||
+      !overComponentId ||
+      activeComponentId === overComponentId
+    ) {
+      return {};
+    }
+
+    const activeIndex = schema.findIndex(
+      (component) => component.id === activeComponentId
+    );
+    const overIndex = schema.findIndex(
+      (component) => component.id === overComponentId
+    );
+
+    if (activeIndex === -1 || overIndex === -1) {
+      return {};
+    }
+
+    const position =
+      activeIndex < overIndex ? "after" : activeIndex > overIndex ? "before" : null;
+
+    if (!position) {
+      return {};
+    }
+
+    const indicatorMap: Record<string, "before" | "after"> = {};
+    indicatorMap[overComponentId] = position;
+    return indicatorMap;
+  }, [activeComponentId, overComponentId, schema]);
+
+  const dropIndicatorPosition = useCallback(
+    (componentId: string) => dropIndicatorById[componentId] ?? null,
+    [dropIndicatorById]
   );
 
   if (schema.length === 0) {
@@ -185,7 +247,9 @@ export function PreviewApp() {
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
     >
       <SortableContext
         items={sortableIds}
@@ -198,6 +262,7 @@ export function PreviewApp() {
               component={component}
               index={index}
               isSelected={component.id === selectedInstanceId}
+              dropIndicatorPosition={dropIndicatorPosition(component.id)}
               onSelect={sendComponentSelected}
               onKeyDown={handleKeyDown}
             />
@@ -212,6 +277,7 @@ type SortableComponentInstanceProps = {
   component: ComponentSchema;
   index: number;
   isSelected: boolean;
+  dropIndicatorPosition: "before" | "after" | null;
   onSelect: (component: ComponentSchema, index: number) => void;
   onKeyDown: (
     event: KeyboardEvent<HTMLDivElement>,
@@ -224,6 +290,7 @@ function SortableComponentInstance({
   component,
   index,
   isSelected,
+  dropIndicatorPosition,
   onSelect,
   onKeyDown
 }: SortableComponentInstanceProps) {
@@ -239,7 +306,9 @@ function SortableComponentInstance({
   const instanceClassName = [
     "component-instance",
     isSelected ? "component-instance--selected" : "",
-    isDragging ? "component-instance--dragging" : ""
+    isDragging ? "component-instance--dragging" : "",
+    dropIndicatorPosition === "before" ? "component-instance--drop-before" : "",
+    dropIndicatorPosition === "after" ? "component-instance--drop-after" : ""
   ]
     .filter(Boolean)
     .join(" ");
