@@ -14,10 +14,11 @@ export interface ComponentSchema {
 }
 
 export interface BuilderToPreviewMessage {
-  type: typeof BUILDER_MESSAGE_TYPE;
+  type: typeof BUILDER_MESSAGE_TYPE | typeof THEME_SYNC_TYPE;
   payload: {
-    schema: ComponentSchema[];
+    schema?: ComponentSchema[];
     selectedInstanceId?: string | null;
+    theme?: "light" | "dark";
   };
 };
 
@@ -41,6 +42,7 @@ export type PreviewToBuilderMessage =
     };
 
 export const BUILDER_MESSAGE_TYPE = "builder:update-components";
+export const THEME_SYNC_TYPE = "builder:theme-sync";
 export const PREVIEW_READY_TYPE = "preview:ready";
 export const PREVIEW_COMPONENT_SELECTED_TYPE = "preview:component-selected";
 export const PREVIEW_COMPONENTS_REORDERED_TYPE =

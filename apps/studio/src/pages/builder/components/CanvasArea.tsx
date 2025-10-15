@@ -6,6 +6,7 @@ import { usePreviewMessaging } from "../hooks/usePreviewMessaging";
 interface CanvasAreaProps {
   canvasComponents: [];
   selectedInstanceId: string | null;
+  theme: "light" | "dark";
   isDraggingOverPreview: boolean;
   isDraggingComponent?: boolean;
   onDragEnter: (event: DragEvent<HTMLDivElement>) => void;
@@ -19,6 +20,7 @@ interface CanvasAreaProps {
 export function CanvasArea({
   canvasComponents,
   selectedInstanceId,
+  theme,
   isDraggingOverPreview,
   isDraggingComponent = false,
   onDragEnter,
@@ -40,6 +42,7 @@ export function CanvasArea({
   const { iframeRef } = usePreviewMessaging({
     schema,
     selectedInstanceId,
+    theme,
     onComponentSelected: ({ instanceId }) => {
       onComponentClick(instanceId);
     },

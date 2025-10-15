@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTheme } from "../../theme";
 import { BuilderHeader } from "./components/BuilderHeader";
 import { CanvasArea } from "./components/CanvasArea";
 import { ComponentLibrary } from "./components/ComponentLibrary";
@@ -11,6 +12,7 @@ export function BuilderPage() {
   const [selectedLibraryComponentId, setSelectedLibraryComponentId] =
     useState("");
 
+  const { theme } = useTheme();
   const { handleMouseEnter, handleMouseLeave } = useComponentHover();
 
   const {
@@ -71,6 +73,7 @@ export function BuilderPage() {
           <CanvasArea
             canvasComponents={canvasComponents}
             selectedInstanceId={selectedInstanceId}
+            theme={theme}
             isDraggingOverPreview={isDraggingOverPreview}
             isDraggingComponent={isDraggingComponent}
             onDragEnter={handleDragEnter}

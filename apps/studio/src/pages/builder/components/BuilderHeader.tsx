@@ -33,6 +33,20 @@ export function BuilderHeader() {
           ))}
         </nav>
       </div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700"
+        >
+          保存
+        </button>
+        <button
+          type="button"
+          className="rounded-full bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+        >
+          发布
+        </button>
+      </div>
     </header>
   );
 }

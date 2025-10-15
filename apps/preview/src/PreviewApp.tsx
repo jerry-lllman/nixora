@@ -28,7 +28,8 @@ import {
   BUILDER_MESSAGE_TYPE,
   PREVIEW_COMPONENT_SELECTED_TYPE,
   PREVIEW_COMPONENTS_REORDERED_TYPE,
-  PREVIEW_READY_TYPE
+  PREVIEW_READY_TYPE,
+  THEME_SYNC_TYPE
 } from "./shared/messaging";
 
 interface SortableItemProps {
@@ -70,10 +71,10 @@ function SortableItem({
       {...attributes}
       {...listeners}
       onClick={() => onComponentClick(component.id, index, component.type)}
-      className={`bg-white border-2 rounded-lg cursor-grab active:cursor-grabbing hover:border-blue-400 hover:shadow-md transition-all ${
+      className={`bg-white dark:bg-slate-800 border-2 rounded-lg cursor-grab active:cursor-grabbing hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all ${
         isSelected
-          ? "border-blue-500 ring-2 ring-blue-500/20"
-          : "border-gray-300"
+          ? "border-blue-500 ring-2 ring-blue-500/20 dark:ring-blue-500/30"
+          : "border-gray-300 dark:border-gray-700"
       }`}
     >
       <NixoraButton {...component.props} />
@@ -83,7 +84,7 @@ function SortableItem({
 
 function Item({ component }: { component: ComponentSchema }) {
   return (
-    <div className="bg-white border-1 border-blue-500 rounded-lg  cursor-grabbing">
+    <div className="bg-white dark:bg-slate-800 border-1 border-blue-500 dark:border-blue-400 rounded-lg cursor-grabbing">
       <NixoraButton {...component.props} />
     </div>
   );
@@ -96,6 +97,7 @@ export default function PreviewApp() {
     null
   );
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -120,8 +122,15 @@ export default function PreviewApp() {
     const handleMessage = (event: MessageEvent<BuilderToPreviewMessage>) => {
       if (event.data?.type === BUILDER_MESSAGE_TYPE) {
         const { schema, selectedInstanceId } = event.data.payload;
-        setComponents(schema);
+        if (schema) {
+          setComponents(schema);
+        }
         setSelectedInstanceId(selectedInstanceId ?? null);
+      } else if (event.data?.type === THEME_SYNC_TYPE) {
+        const { theme } = event.data.payload;
+        if (theme) {
+          setTheme(theme);
+        }
       }
     };
 
@@ -178,18 +187,26 @@ export default function PreviewApp() {
     });
   };
 
+  // 应用主题到 document
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(theme);
+    root.dataset.theme = theme;
+  }, [theme]);
+
   // 获取当前拖拽的组件
   const activeComponent = activeId
     ? components.find((c) => c.id === activeId)
     : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-950 dark:to-slate-900 p-8">
       <div className="max-w-3xl mx-auto">
         {components.length === 0 ? (
           <div className="flex items-center justify-center min-h-[400px]">
             <div className="text-center">
-              <div className="text-gray-400 mb-4">
+              <div className="text-gray-400 dark:text-gray-600 mb-4">
                 <svg
                   className="w-16 h-16 mx-auto"
                   fill="none"
@@ -204,10 +221,12 @@ export default function PreviewApp() {
                   />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-700 mb-2">
+              <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
                 等待组件数据
               </h2>
-              <p className="text-gray-500">从左侧拖拽组件到画布中开始构建</p>
+              <p className="text-gray-500 dark:text-gray-500">
+                从左侧拖拽组件到画布中开始构建
+              </p>
             </div>
           </div>
         ) : (

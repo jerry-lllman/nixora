@@ -8,12 +8,14 @@ import {
   BUILDER_MESSAGE_TYPE,
   PREVIEW_COMPONENT_SELECTED_TYPE,
   PREVIEW_COMPONENTS_REORDERED_TYPE,
-  PREVIEW_READY_TYPE
+  PREVIEW_READY_TYPE,
+  THEME_SYNC_TYPE
 } from "../../../shared/messaging";
 
 interface UsePreviewMessagingProps {
   schema: ComponentSchema[];
   selectedInstanceId: string | null;
+  theme?: "light" | "dark";
   onComponentSelected: (selection: {
     instanceId: string;
     componentType: string;
@@ -25,6 +27,7 @@ interface UsePreviewMessagingProps {
 export function usePreviewMessaging({
   schema,
   selectedInstanceId,
+  theme,
   onComponentSelected,
   onComponentsReordered
 }: UsePreviewMessagingProps) {
@@ -34,25 +37,26 @@ export function usePreviewMessaging({
 
   useEffect(() => {
     const handlePreviewMessage = (
-      event: MessageEvent<PreviewToBuilderMessage>
+      event: MessageEvent
     ) => {
       // 不校验域名，根据事件类型来处理
-      if (event.data?.type === PREVIEW_READY_TYPE) {
-        setPreviewReadySignal((signal) => signal + 1);
-        return;
-      }
+      const data = event.data as PreviewToBuilderMessage | undefined;
+      if (!data?.type) return;
 
-      if (event.data?.type === PREVIEW_COMPONENTS_REORDERED_TYPE) {
-        onComponentsReordered(event.data.payload.instanceIds);
-        return;
-      }
-
-      if (event.data?.type === PREVIEW_COMPONENT_SELECTED_TYPE) {
-        onComponentSelected({
-          instanceId: event.data.payload.instanceId,
-          componentType: event.data.payload.componentType,
-          index: event.data.payload.index
-        });
+      switch (data.type) {
+        case PREVIEW_READY_TYPE:
+          setPreviewReadySignal((signal) => signal + 1);
+          break;
+        case PREVIEW_COMPONENTS_REORDERED_TYPE:
+          onComponentsReordered(data.payload.instanceIds);
+          break;
+        case PREVIEW_COMPONENT_SELECTED_TYPE:
+          onComponentSelected({
+            instanceId: data.payload.instanceId,
+            componentType: data.payload.componentType,
+            index: data.payload.index
+          });
+          break;
       }
     };
 
@@ -88,6 +92,27 @@ export function usePreviewMessaging({
     previewReadySignal,
     schema
   ]);
+
+  // 同步主题到 preview
+  useEffect(() => {
+    if (previewReadySignal === 0 || !theme) {
+      return;
+    }
+
+    const previewWindow = iframeRef.current?.contentWindow;
+    if (!previewWindow) {
+      return;
+    }
+
+    const message: BuilderToPreviewMessage = {
+      type: THEME_SYNC_TYPE,
+      payload: {
+        theme
+      }
+    };
+
+    previewWindow.postMessage(message, "*");
+  }, [theme, previewReadySignal]);
 
   return {
     iframeRef
