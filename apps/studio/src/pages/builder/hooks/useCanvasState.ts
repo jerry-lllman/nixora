@@ -164,6 +164,7 @@ export function useCanvasState() {
     getBuilderComponent,
     moveComponent,
     reorderComponents,
-    clearCanvas
+    clearCanvas,
+    setCanvasComponents
   };
 }

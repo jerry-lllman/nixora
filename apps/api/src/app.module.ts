@@ -8,6 +8,7 @@ import authConfig from "./config/auth.config";
 import databaseConfig from "./config/database.config";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
+import { CanvasModule } from './canvas/canvas.module';
 
 @Module({
   imports: [
@@ -25,7 +26,8 @@ import { UsersModule } from "./users/users.module";
       })
     }),
     UsersModule,
-    AuthModule
+    AuthModule,
+    CanvasModule
   ],
   controllers: [AppController],
   providers: [AppService]

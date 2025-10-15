@@ -30,3 +30,29 @@ export interface ApiError {
   message: string | string[];
   error?: string;
 }
+
+// Canvas 相关类型
+export interface Canvas {
+  id: string;
+  title: string;
+  components: any[];
+  description?: string;
+  isPublished: boolean;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCanvasRequest {
+  title: string;
+  components: any[];
+  description?: string;
+  isPublished?: boolean;
+}
+
+export interface UpdateCanvasRequest {
+  title?: string;
+  components?: any[];
+  description?: string;
+  isPublished?: boolean;
+}

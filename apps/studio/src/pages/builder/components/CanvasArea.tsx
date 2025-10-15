@@ -1,10 +1,11 @@
 import type { DragEvent } from "react";
 import { useMemo } from "react";
+import type { CanvasComponentInstance } from "../../../shared/builderComponents";
 import type { ComponentSchema } from "../../../shared/messaging";
 import { usePreviewMessaging } from "../hooks/usePreviewMessaging";
 
 interface CanvasAreaProps {
-  canvasComponents: [];
+  canvasComponents: CanvasComponentInstance[];
   selectedInstanceId: string | null;
   theme: "light" | "dark";
   isDraggingOverPreview: boolean;

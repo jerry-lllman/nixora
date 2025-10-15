@@ -1,11 +1,24 @@
 import { Link } from "react-router-dom";
 import { ThemeToggle } from "../../../components/ThemeToggle";
 
-export function BuilderHeader() {
+interface BuilderHeaderProps {
+  onSave: () => void;
+  onPublish: () => void;
+  isSaving?: boolean;
+  isPublishing?: boolean;
+}
+
+export function BuilderHeader({
+  onSave,
+  onPublish,
+  isSaving,
+  isPublishing
+}: BuilderHeaderProps) {
   return (
     <header className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-8 py-5 text-sm text-slate-600 backdrop-blur dark:border-white/5 dark:bg-slate-950/60 dark:text-slate-400">
       <div className="flex items-center gap-3">
         <ThemeToggle />
+        {/* @ts-expect-error React types version mismatch */}
         <Link
           to="/"
           className="rounded-full border border-slate-200 px-3 py-1 text-emerald-600 transition hover:border-emerald-500/60 hover:text-emerald-500 dark:border-transparent dark:text-emerald-300 dark:hover:border-emerald-500/40 dark:hover:text-emerald-200"
@@ -36,15 +49,19 @@ export function BuilderHeader() {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700"
+          onClick={onSave}
+          disabled={isSaving}
+          className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-700"
         >
-          保存
+          {isSaving ? "保存中..." : "保存"}
         </button>
         <button
           type="button"
-          className="rounded-full bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+          onClick={onPublish}
+          disabled={isPublishing}
+          className="rounded-full bg-emerald-600 px-4 py-2 text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-emerald-500 dark:hover:bg-emerald-600"
         >
-          发布
+          {isPublishing ? "发布中..." : "发布"}
         </button>
       </div>
     </header>
