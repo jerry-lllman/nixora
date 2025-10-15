@@ -58,6 +58,7 @@ export function BuilderPage() {
         setIsLoading(true);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const canvas = await canvasApi.findOne(canvasId);
+
         // 加载画布的组件数据
         // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
         setCanvasComponents(canvas.components);
@@ -105,7 +106,6 @@ export function BuilderPage() {
       if (canvasId) {
         // 更新现有画布
         await canvasApi.update(canvasId, canvasData);
-        // 静默保存，不显示提示
       } else {
         // 创建新画布
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
