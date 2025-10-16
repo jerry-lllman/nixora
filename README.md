@@ -14,6 +14,8 @@ This repository contains the monorepo scaffold for the Nixora ecommerce marketin
 ```
 ├── apps
 │   ├── studio             # Drag-and-drop builder & campaign operations hub (Vite + React)
+│   ├── renderer           # Canvas renderer for iframe preview
+│   ├── nx-app             # Published canvas hosting (Next.js App Router)
 │   └── api                # NestJS backend services
 ├── packages
 │   ├── ui                 # Shared React component library

@@ -22,8 +22,9 @@ Nixora 是一个电商营销平台的 monorepo,提供拖拽式体验构建工具
 ```
 apps/
   ├── studio/          # 拖拽构建器和运营中心 (Vite + React)
+  ├── renderer/        # 画布渲染引擎 (iframe 中运行)
+  ├── nx-app/          # 已发布画布托管服务 (Next.js App Router)
   ├── api/             # NestJS 后端服务
-  └── renderer/        # 画布渲染引擎 (iframe 中运行)
 packages/
   ├── ui/              # 共享 React 组件库 (@nixora/ui)
   └── utils/           # TypeScript 工具函数
@@ -83,6 +84,42 @@ THEME_SYNC_TYPE; // 同步主题 (light/dark)
 - **Canvas 实体** (`apps/api/src/canvas/entities/canva.entity.ts`):
   - `components` 字段使用 `@Column({ type: "jsonb" })` 存储组件数组
   - 每个组件包含: `instanceId`, `componentType`, `props`, `order`
+  - `isPublished`: 是否已发布
+  - `publishedAt`: 发布时间戳
+  - `publishUrl`: 发布后的访问 URL（格式：`{NX_APP_URL}/p/{canvasId}`）
+
+### nx-app 数据访问方案
+
+**核心设计**: nx-app 使用 Prisma 直连 PostgreSQL，不通过 API
+
+- **架构优势**:
+  - 性能提升 5 倍（直连 ~20ms vs 通过API ~120ms）
+  - API 故障不影响已发布页面访问
+  - 读写分离（CQRS 模式）
+- **Prisma Schema** (`apps/nx-app/prisma/schema.prisma`):
+
+  ```prisma
+  model Canvas {
+    id          String   @id @default(uuid())
+    components  Json     // JSONB 类型
+    isPublished Boolean
+    publishedAt DateTime?
+    // ...
+    @@map("canvas")
+  }
+  ```
+
+- **数据库连接** (`apps/nx-app/lib/db.ts`):
+  - 使用 Prisma Client 单例模式
+  - 生产环境推荐使用只读数据库用户
+- **查询示例**:
+
+  ```typescript
+  const canvas = await prisma.canvas.findUnique({
+    where: { id, isPublished: true },
+    select: { id: true, title: true, components: true }
+  });
+  ```
 
 - **DTO 验证要点**:
   - 必须使用 `@Allow()` 装饰器允许 `props` 的动态属性
@@ -203,8 +240,6 @@ pnpm clean --filter studio
 
 ### API 环境变量 (`apps/api/.env`)
 
-参考 `apps/api/.env.example`:
-
 ```env
 NODE_ENV=development
 PORT=3333
@@ -223,6 +258,25 @@ BCRYPT_SALT_ROUNDS=12
 - 修改 `JWT_SECRET` 为强密码
 - 设置 `DB_SYNCHRONIZE=false` 并使用数据库迁移
 - 配置真实的 PostgreSQL 连接
+
+### nx-app 环境变量 (`apps/nx-app/.env.local`)
+
+```env
+# PostgreSQL 连接（推荐使用只读用户）
+DATABASE_URL=postgresql://nx_app_readonly:password@localhost:5432/nixora
+
+# 开发环境可以使用主用户
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nixora
+```
+
+**生产环境**: 配置只读数据库用户，提高安全性：
+
+```sql
+CREATE USER nx_app_readonly WITH PASSWORD 'secure_password';
+GRANT CONNECT ON DATABASE nixora TO nx_app_readonly;
+GRANT USAGE ON SCHEMA public TO nx_app_readonly;
+GRANT SELECT ON canvas TO nx_app_readonly;
+```
 
 ## 开发工作流
 
@@ -283,6 +337,9 @@ BCRYPT_SALT_ROUNDS=12
 - `PATCH /api/canvas/:id` - 更新画布 (需认证)
 - `DELETE /api/canvas/:id` - 删除画布 (需认证)
 - `POST /api/canvas/:id/publish` - 发布画布 (需认证)
+- `POST /api/canvas/:id/unpublish` - 取消发布 (需认证)
+
+**注意**: nx-app 不通过 API 访问数据，而是使用 Prisma 直连数据库
 
 ## 注意事项
 

@@ -8,6 +8,7 @@ export interface AppConfig {
   port: number;
   globalPrefix: string;
   requestTimeoutMs: number;
+  nxAppUrl: string;
 }
 
 export default registerAs<AppConfig>("app", () => ({
@@ -18,5 +19,6 @@ export default registerAs<AppConfig>("app", () => ({
   version: process.env.APP_VERSION ?? "0.1.0",
   port: Number(process.env.PORT ?? 3333),
   globalPrefix: process.env.GLOBAL_PREFIX ?? "api",
-  requestTimeoutMs: Number(process.env.REQUEST_TIMEOUT_MS ?? 10000)
+  requestTimeoutMs: Number(process.env.REQUEST_TIMEOUT_MS ?? 10000),
+  nxAppUrl: process.env.NX_APP_URL ?? "http://localhost:3000"
 }));

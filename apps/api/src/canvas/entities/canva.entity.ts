@@ -8,6 +8,7 @@ import {
   UpdateDateColumn
 } from "typeorm";
 import { User } from "../../users/user.entity";
+import { CanvasComponent } from "../interfaces/canvas-component.interface";
 
 @Entity({ name: "canvas" })
 export class Canvas {
@@ -18,13 +19,19 @@ export class Canvas {
   title!: string;
 
   @Column({ type: "jsonb" })
-  components!: any[];
+  components!: CanvasComponent[];
 
   @Column({ nullable: true })
   description?: string;
 
   @Column({ default: false })
   isPublished!: boolean;
+
+  @Column({ nullable: true })
+  publishedAt?: Date;
+
+  @Column({ nullable: true })
+  publishUrl?: string;
 
   @Column({ type: "uuid" })
   userId!: string;
