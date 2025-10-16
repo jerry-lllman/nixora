@@ -129,6 +129,9 @@ importers:
 
   apps/nx-app:
     dependencies:
+      '@nixora/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@prisma/client':
         specifier: ^6.3.0
         version: 6.17.1(prisma@6.17.1)(typescript@5.9.3)

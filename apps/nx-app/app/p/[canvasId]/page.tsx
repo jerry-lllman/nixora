@@ -1,3 +1,4 @@
+import { ComponentRenderer } from "@/components/ComponentRenderer";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 
@@ -66,12 +67,20 @@ export default async function CanvasPage({ params }: PageProps) {
 
           <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">
-              Canvas Data (JSON)
+              渲染的组件
             </h2>
-            <pre className="bg-gray-100 p-4 rounded-lg overflow-auto text-sm">
+            <ComponentRenderer components={canvas.components as any[]} />
+          </div>
+
+          {/* 调试信息：可选显示 JSON */}
+          <details className="mt-8">
+            <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
+              查看原始 JSON 数据
+            </summary>
+            <pre className="bg-gray-100 p-4 rounded-lg overflow-auto text-sm mt-2">
               {JSON.stringify(canvas, null, 2)}
             </pre>
-          </div>
+          </details>
         </div>
       </div>
     </main>
