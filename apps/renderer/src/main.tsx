@@ -1,16 +1,16 @@
 import ReactDOM from "react-dom/client";
 import React from "react";
-import PreviewApp from "./PreviewApp.tsx";
+import RendererApp from "./RendererApp.tsx";
 import "@nixora/ui/styles.css";
 
-const rootElement = document.getElementById("preview-root");
+const rootElement = document.getElementById("renderer-root");
 
 if (!rootElement) {
-  throw new Error("Preview root element not found");
+  throw new Error("Renderer root element not found");
 }
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <PreviewApp />
+    <RendererApp />
   </React.StrictMode>
 );

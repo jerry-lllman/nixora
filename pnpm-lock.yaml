@@ -127,7 +127,7 @@ importers:
         specifier: ~5.4.0
         version: 5.4.5
 
-  apps/preview:
+  apps/renderer:
     dependencies:
       '@dnd-kit/core':
         specifier: ^6.3.1

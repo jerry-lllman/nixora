@@ -67,7 +67,7 @@ export function CanvasArea({
             <iframe
               ref={iframeRef}
               src="http://localhost:3174"
-              title="Canvas Preview"
+              title="Canvas Renderer"
               className="w-full h-full min-h-[600px] border-0"
               sandbox="allow-scripts allow-same-origin"
             />

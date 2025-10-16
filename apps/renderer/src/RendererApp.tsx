@@ -1,13 +1,13 @@
 import {
   closestCenter,
   DndContext,
-  DragEndEvent,
   DragOverlay,
-  DragStartEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -90,7 +90,7 @@ function Item({ component }: { component: ComponentSchema }) {
   );
 }
 
-export default function PreviewApp() {
+export default function RendererApp() {
   // 接收来自 builder 的组件数据
   const [components, setComponents] = useState<ComponentSchema[]>([]);
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(
