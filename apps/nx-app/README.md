@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# nx-app
 
-## Getting Started
+Next.js 应用，用于展示已发布的 Canvas 页面。直接连接数据库查询数据，提供高性能的公开访问。
 
-First, run the development server:
+## 快速开始
+
+详细的设置说明请查看 [SETUP.md](./SETUP.md)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 1. 安装依赖
+pnpm install
+
+# 2. 配置环境变量
+cp env.example .env.local
+# 编辑 .env.local 设置数据库连接
+
+# 3. 启动开发服务器
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+访问 [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 主要功能
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 📄 展示已发布的 Canvas 页面 (`/p/[canvasId]`)
+- 🗄️ 直接连接数据库（使用 Prisma）
+- ⚡ 高性能（~20ms 响应延迟）
+- 🔒 只读访问，安全可靠
 
-## Learn More
+## 技术栈
 
-To learn more about Next.js, take a look at the following resources:
+- **框架**: Next.js 15 (App Router)
+- **数据库**: PostgreSQL + Prisma
+- **样式**: Tailwind CSS
+- **语言**: TypeScript
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 项目结构
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+apps/nx-app/
+├── app/              # Next.js App Router
+│   ├── p/           # 公开的 Canvas 页面
+│   ├── layout.tsx   # 根布局
+│   └── page.tsx     # 首页
+├── lib/             # 工具函数
+│   └── db.ts        # Prisma 客户端单例
+├── prisma/          # 数据库配置
+│   └── schema.prisma
+└── env.example      # 环境变量模板
+```
 
-## Deploy on Vercel
+## 文档
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- [SETUP.md](./SETUP.md) - 详细的设置指南
+- [DATABASE_CONNECTION.md](./DATABASE_CONNECTION.md) - 数据库连接配置
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 架构说明
+
+详见项目根目录的 `NX_APP_DATABASE_GUIDE.md` 了解架构设计和技术决策。

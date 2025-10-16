@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# prisma generated files (if using custom output path)
+/app/generated/
+/generated/
+
+# macOS files
+.DS_Store

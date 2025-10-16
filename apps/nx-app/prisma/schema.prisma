@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Canvas {
+  id          String    @id @default(uuid())
+  title       String
+  components  Json      // JSONB 类型
+  description String?
+  isPublished Boolean   @default(false) @map("isPublished")
+  publishedAt DateTime? @map("publishedAt")
+  publishUrl  String?   @map("publishUrl")
+  userId      String    @map("userId")
+  createdAt   DateTime  @default(now()) @map("createdAt")
+  updatedAt   DateTime  @updatedAt @map("updatedAt")
+
+  @@map("canvas")
+}
+
