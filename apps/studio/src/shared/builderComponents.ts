@@ -38,21 +38,21 @@ export interface CanvasComponentInstance {
   order: number;                  // 排序
 }
 
-import { NixoraButton } from "@nixora/ui";
+import { Button } from "@nixora/ui";
 import { NixoraButtonConfig } from "../pages/builder/components/settings/ButtonConfig";
 
 export const builderComponents: BuilderComponent[] = [
   // ===== 基础组件 =====
   { 
-    componentType: 'NixoraButton',
+    componentType: 'Button',
     name: "营销按钮",
     description: "可配置样式、大小和图标的按钮组件",
     category: "basic",
     icon: "🔘",
-    component: NixoraButton,
+    component: Button,
     ConfigPanel: NixoraButtonConfig,
     props: {
-      text: "立即购买",
+      value: "立即购买",
       variant: "primary",
       size: "medium",
       fullWidth: false,

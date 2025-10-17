@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useEffect, useState } from "react";
-import { NixoraButton } from "@nixora/ui";
+import { Button } from "@nixora/ui";
 import type {
   BuilderToPreviewMessage,
   ComponentSchema,
@@ -77,7 +77,7 @@ function SortableItem({
           : "border-gray-300 dark:border-gray-700"
       }`}
     >
-      <NixoraButton {...component.props} />
+      <Button {...component.props} />
     </div>
   );
 }
@@ -85,7 +85,7 @@ function SortableItem({
 function Item({ component }: { component: ComponentSchema }) {
   return (
     <div className="bg-white dark:bg-slate-800 border-1 border-blue-500 dark:border-blue-400 rounded-lg cursor-grabbing">
-      <NixoraButton {...component.props} />
+      <Button {...component.props} />
     </div>
   );
 }

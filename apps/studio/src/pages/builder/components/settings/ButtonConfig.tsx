@@ -1,7 +1,7 @@
 import type { ConfigPanelProps } from "../../../../shared/builderComponents";
 
 /**
- * NixoraButton 组件的配置面板
+ * Button 组件的配置面板
  */
 export function NixoraButtonConfig({ value, onChange }: ConfigPanelProps) {
   const baseInputClass =

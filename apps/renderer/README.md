@@ -100,7 +100,7 @@ Renderer 接收消息
   ↓
 更新 components 状态
   ↓
-渲染组件: <NixoraButton {...props} />
+渲染组件: <Button {...props} />
 ```
 
 ## 添加新组件支持

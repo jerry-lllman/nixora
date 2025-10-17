@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { NixoraButton } from "@nixora/ui";
+import { Button } from "@nixora/ui";
 import { ThemeToggle } from "../components/ThemeToggle";
 
 export function HomePage() {
@@ -29,10 +29,10 @@ export function HomePage() {
               进入页面搭建器
             </Link>
             <Link to="/login">
-              <NixoraButton variant="ghost">登录</NixoraButton>
+              <Button>登录</Button>
             </Link>
             <Link to="/register">
-              <NixoraButton>注册</NixoraButton>
+              <Button>注册</Button>
             </Link>
           </div>
         </header>
@@ -54,12 +54,10 @@ export function HomePage() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link to="/register" className="flex-1 sm:flex-none">
-                <NixoraButton className="w-full">注册账号</NixoraButton>
+                <Button>注册账号</Button>
               </Link>
               <Link to="/login" className="flex-1 sm:flex-none">
-                <NixoraButton variant="outline" className="w-full">
-                  登录已有账号
-                </NixoraButton>
+                <Button>登录已有账号</Button>
               </Link>
             </div>
             <dl className="grid gap-6 sm:grid-cols-3">
@@ -165,9 +163,9 @@ export function HomePage() {
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <Link to="/register">
-              <NixoraButton>注册账号</NixoraButton>
+              <Button>注册账号</Button>
             </Link>
-            <NixoraButton variant="ghost">联系销售</NixoraButton>
+            <Button>联系销售</Button>
           </div>
         </footer>
       </div>
