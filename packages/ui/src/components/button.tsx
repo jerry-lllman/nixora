@@ -26,33 +26,41 @@ const buttonVariants = cva(
         icon: "size-9",
         "icon-sm": "size-8",
         "icon-lg": "size-10"
+      },
+      fullWidth: {
+        true: "w-full",
+        false: ""
       }
     },
     defaultVariants: {
       variant: "default",
-      size: "default"
+      size: "default",
+      fullWidth: false
     }
   }
 );
+
+type ButtonProps = React.ComponentProps<"button"> &
+  VariantProps<typeof buttonVariants> & {
+    asChild?: boolean;
+  };
 
 function Button({
   className,
   variant,
   size,
   asChild = false,
+  fullWidth,
   value,
   children,
   ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean;
-  }) {
+}: ButtonProps) {
   const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, fullWidth, className }))}
       {...props}
     >
       {value || children}

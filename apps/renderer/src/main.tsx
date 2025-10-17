@@ -1,6 +1,7 @@
 import ReactDOM from "react-dom/client";
 import React from "react";
 import RendererApp from "./RendererApp.tsx";
+import "./index.css";
 
 const rootElement = document.getElementById("renderer-root");
 

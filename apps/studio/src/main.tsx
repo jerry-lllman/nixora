@@ -1,12 +1,12 @@
-import React from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
 import App from "./App";
 import "./index.css";
-import { ThemeProvider } from "./theme";
-import { queryClient } from "./lib/query-client";
 import { AuthProvider } from "./contexts/AuthContext";
+import { queryClient } from "./lib/query-client";
+import { ThemeProvider } from "./theme";
 
 const rootElement = document.getElementById("root");
 

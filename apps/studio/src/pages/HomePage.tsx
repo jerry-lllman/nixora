@@ -29,7 +29,7 @@ export function HomePage() {
               进入页面搭建器
             </Link>
             <Link to="/login">
-              <Button>登录</Button>
+              <Button variant="outline">登录</Button>
             </Link>
             <Link to="/register">
               <Button>注册</Button>
